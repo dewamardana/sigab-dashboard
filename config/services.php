@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    'sigab_api' => [
+        'key' => env('SIGAB_API_KEY'),
+    ],
+    'mqtt' => [
+        'host' => env('MQTT_HOST', 'broker.hivemq.com'),
+        'port' => env('MQTT_PORT', 1883),
+        'client_id' => env('MQTT_CLIENT_ID', 'laravel-sigab-reload'),
+    ],
+
 ];

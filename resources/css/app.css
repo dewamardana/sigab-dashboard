@@ -1,9 +1,44 @@
-@import 'tailwindcss';
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
+@layer components {
+    /* Tombol — struktur & animasi klik mengikuti pola Flowbite standar
+       (rounded-lg, focus ring tebal), warna dari brand primary */
+    .btn-primary {
+        @apply inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 px-6 py-3
+               text-sm font-semibold text-white shadow-[0_8px_20px_rgb(43,168,74,0.25)]
+               transition-all duration-150 ease-out
+               hover:bg-primary-700
+               active:scale-95 active:shadow-inner
+               focus:outline-none focus:ring-4 focus:ring-primary-300;
+    }
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    .btn-secondary {
+        @apply inline-flex items-center justify-center gap-2 rounded-full bg-white/80 backdrop-blur px-6 py-3
+               text-sm font-semibold text-neutral-700 border border-white/60 shadow-sm
+               transition-all duration-150 ease-out
+               hover:bg-white
+               active:scale-95
+               focus:outline-none focus:ring-4 focus:ring-neutral-200;
+    }
+
+    /* Kartu utama — glassmorphism lembut: putih transparan + blur +
+       border tipis putih + shadow sangat halus (diffused), rounded-3xl
+       untuk kesan modern/lembut ala bento-grid dashboard */
+    .card {
+        @apply bg-white/80 backdrop-blur-xl border border-white/60 rounded-3xl
+               shadow-[0_8px_30px_rgb(4,15,15,0.04)];
+    }
+
+    /* Varian lebih transparan — dipakai untuk kartu yang mengambang
+       langsung di atas blob gradient dekoratif (hero) */
+    .glass-card {
+        @apply bg-white/60 backdrop-blur-2xl border border-white/60 rounded-3xl
+               shadow-[0_8px_30px_rgb(4,15,15,0.06)];
+    }
+}
+.map-wrapper {
+    position: relative;
+    isolation: isolate;
 }
