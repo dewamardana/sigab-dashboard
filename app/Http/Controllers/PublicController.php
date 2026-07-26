@@ -20,7 +20,7 @@ class PublicController extends Controller
                 'latitude' => $location->latitude,
                 'longitude' => $location->longitude,
                 'device_count' => $location->devices()->where('is_active', true)->count(),
-                'latest' => Cache::get("location.{$location->id}.latest"),
+                'latest' => $this->latestForLocation($location),
             ];
         });
 
@@ -28,9 +28,9 @@ class PublicController extends Controller
     }
 
     /**
-     * Halaman overview lokasi — grafik GABUNGAN per jenis sensor
-     * (semua device dalam satu grafik, dibedakan lewat legenda nama
-     * device), TANPA peta. Untuk detail satu device, klik card device.
+     * Halaman overview lokasi — kartu ringkas tiap device, berisi SEMUA
+     * sensor (TMA, Hujan, dan sensor pendukung), tanpa grafik — untuk
+     * riwayat & grafik, buka halaman device masing-masing.
      */
     public function show(Location $location): View
     {
@@ -38,54 +38,44 @@ class PublicController extends Controller
 
         $devices = $location->devices()->where('is_active', true)->with('sensorTypes')->get();
 
-        // Kumpulkan semua jenis sensor yang dipakai device-device di
-        // lokasi ini (union, tanpa duplikat), sensor inti (TMA/Hujan)
-        // ditampilkan lebih dulu
-        $sensorTypesUsed = $devices->flatMap(fn($d) => $d->sensorTypes)
-            ->unique('id')
-            ->sortByDesc('is_core')
-            ->values();
+        $statusCounts = ['AMAN' => 0, 'SIAGA' => 0, 'BAHAYA' => 0];
 
-        $charts = $sensorTypesUsed->map(function ($type) use ($devices) {
-            $series = $devices->filter(fn($d) => $d->sensorTypes->contains('id', $type->id))
-                ->map(function ($device) use ($type) {
-                    $history = SensorData::where('device_id', $device->id)
-                        ->latest('recorded_at')->limit(200)->get()->reverse()->values();
+        $deviceCards = $devices->map(function ($device) use (&$statusCounts) {
+            $latest = $this->latestForDevice($device);
+            if (isset($latest['status'], $statusCounts[$latest['status']])) {
+                $statusCounts[$latest['status']]++;
+            }
 
-                    $points = $history->map(fn($h) => [
-                        'x' => $h->recorded_at->timestamp * 1000,
-                        'y' => $h->getReading($type->code),
-                    ])->filter(fn($p) => $p['y'] !== null)->values();
-
-                    return [
-                        'device_id' => $device->device_id,
-                        'name' => $device->name ?: $device->device_id,
-                        'data' => $points,
-                    ];
-                })->values();
-
-            return [
+            $latestFull = SensorData::where('device_id', $device->id)->latest('recorded_at')->first();
+            $secondary = $device->sensorTypes->where('is_core', false)->where('is_public', true)->map(fn($type) => [
                 'code' => $type->code,
                 'name' => $type->name,
                 'unit' => $type->unit,
-                'is_core' => $type->is_core,
-                'series' => $series,
+                'value' => $latestFull?->getReading($type->code),
+            ])->values();
+
+            return [
+                'id' => $device->id,
+                'device_id' => $device->device_id,
+                'name' => $device->name ?: $device->device_id,
+                'latest' => $latest,
+                'secondary' => $secondary,
+                'threshold_tma_siaga' => $device->threshold_tma_siaga,
+                'threshold_tma_bahaya' => $device->threshold_tma_bahaya,
+                'threshold_hujan_siaga' => $device->threshold_hujan_siaga,
+                'threshold_hujan_bahaya' => $device->threshold_hujan_bahaya,
+                'tma_max' => (int) (ceil($device->threshold_tma_bahaya * 1.25 / 10) * 10),
+                'hujan_max' => (int) (ceil($device->threshold_hujan_bahaya * 1.6 / 5) * 5),
             ];
         });
 
-        $deviceCards = $devices->map(fn($device) => [
-            'id' => $device->id,
-            'device_id' => $device->device_id,
-            'name' => $device->name ?: $device->device_id,
-            'latest' => Cache::get("device.{$device->id}.latest"),
-        ]);
-
-        return view('public.show', compact('location', 'charts', 'deviceCards'));
+        return view('public.show', compact('location', 'deviceCards', 'statusCounts'));
     }
 
     /**
-     * Halaman detail SATU device — peta lokasi + seluruh grafik sensor
-     * milik device ini saja.
+     * Halaman detail SATU device — TMA & Hujan dengan gauge masing-masing
+     * (keduanya sama-sama menentukan status, bukan cuma TMA), sensor
+     * pendukung, peta kecil, dan grafik riwayat terpisah per sensor.
      */
     public function device(Location $location, Device $device): View
     {
@@ -95,9 +85,79 @@ class PublicController extends Controller
         $history = SensorData::where('device_id', $device->id)
             ->latest('recorded_at')->limit(200)->get()->reverse()->values();
 
-        $latest = Cache::get("device.{$device->id}.latest");
-        $sensorTypes = $device->sensorTypes()->orderByDesc('is_core')->get();
+        $latest = $this->latestForDevice($device);
+        $sensorTypes = $device->sensorTypes()->where('is_public', true)->orderByDesc('is_core')->get();
 
-        return view('public.device', compact('location', 'device', 'history', 'latest', 'sensorTypes'));
+        // Skala maksimum gauge dihitung dari threshold BAHAYA milik device
+        // sendiri (bukan angka tetap), supaya device dengan threshold
+        // berbeda tetap menampilkan gauge yang proporsional.
+        $tmaGaugeMax = (int) (ceil($device->threshold_tma_bahaya * 1.25 / 10) * 10);
+        $hujanGaugeMax = (int) (ceil($device->threshold_hujan_bahaya * 1.6 / 5) * 5);
+
+        return view('public.device', compact(
+            'location', 'device', 'history', 'latest', 'sensorTypes', 'tmaGaugeMax', 'hujanGaugeMax'
+        ));
+    }
+
+    /**
+     * Pembacaan terakhir milik SATU device. Cache dulu (cepat) — kalau
+     * kosong (mis. baru saja `cache:clear`/`optimize:clear`, atau server
+     * baru restart), jatuh ke query database supaya data tidak "hilang"
+     * padahal masih ada di tabel sensor_data. Cache diisi ulang supaya
+     * request berikutnya tetap cepat.
+     */
+    private function latestForDevice(Device $device): ?array
+    {
+        $cached = Cache::get("device.{$device->id}.latest");
+        if ($cached) {
+            return $cached;
+        }
+
+        $record = SensorData::where('device_id', $device->id)->latest('recorded_at')->first();
+        if (!$record) {
+            return null;
+        }
+
+        $latest = [
+            'status' => $record->status,
+            'tma_cm' => $record->tma_cm,
+            'hujan_mm' => $record->hujan_mm,
+            'recorded_at' => $record->recorded_at->toIso8601String(),
+        ];
+
+        Cache::forever("device.{$device->id}.latest", $latest);
+
+        return $latest;
+    }
+
+    /**
+     * Sama seperti latestForDevice(), tapi untuk ringkasan tingkat lokasi
+     * (dipakai kartu lokasi di homepage) — ambil dari device dengan
+     * pembacaan paling baru di lokasi tersebut.
+     */
+    private function latestForLocation(Location $location): ?array
+    {
+        $cached = Cache::get("location.{$location->id}.latest");
+        if ($cached) {
+            return $cached;
+        }
+
+        $record = SensorData::whereHas('device', fn($q) => $q->where('location_id', $location->id))
+            ->with('device')->latest('recorded_at')->first();
+        if (!$record) {
+            return null;
+        }
+
+        $latest = [
+            'status' => $record->status,
+            'tma_cm' => $record->tma_cm,
+            'hujan_mm' => $record->hujan_mm,
+            'device_id' => $record->device->device_id,
+            'recorded_at' => $record->recorded_at->toIso8601String(),
+        ];
+
+        Cache::forever("location.{$location->id}.latest", $latest);
+
+        return $latest;
     }
 }

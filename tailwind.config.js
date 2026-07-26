@@ -8,6 +8,7 @@ export default {
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
+        './resources/js/**/*.js',
         './node_modules/flowbite/**/*.js',
     ],
 
@@ -15,11 +16,12 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Inter', ...defaultTheme.fontFamily.sans],
+                mono: ['"JetBrains Mono"', ...defaultTheme.fontFamily.mono],
             },
             colors: {
                 // Brand — hijau, HANYA untuk aksen: tombol, ikon, heading, link, badge AMAN
                 primary: {
-                    50:  '#eaf7ec',
+                    50: '#eaf7ec',
                     100: '#d1eed7',
                     200: '#a8dfb3',
                     300: '#7bcf8c',
@@ -35,7 +37,7 @@ export default {
                 // teks body. Dipisah dari primary supaya card/section punya
                 // kontras tegas tanpa "berebut" warna dengan aksen brand.
                 neutral: {
-                    50:  '#fcfffc', // warna kamu — dipakai untuk card/putih
+                    50: '#fcfffc', // warna kamu — dipakai untuk card/putih
                     100: '#f1f3f2', // background halaman (kontras dari card putih)
                     200: '#e2e6e5', // border card, garis pemisah
                     300: '#c7cecd',

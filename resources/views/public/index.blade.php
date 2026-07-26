@@ -1,12 +1,38 @@
 <x-public-layout>
 
-  {{-- ===================== HERO / JUMBOTRON ===================== --}}
+  @php
+    $statusCounts = ['AMAN' => 0, 'SIAGA' => 0, 'BAHAYA' => 0];
+    foreach ($locations as $loc) {
+        $st = $loc['latest']['status'] ?? null;
+        if (isset($statusCounts[$st])) {
+            $statusCounts[$st]++;
+        }
+    }
+  @endphp
+
+  {{-- ===================== PITA PERINGATAN (hanya tampil kalau ada BAHAYA) ===================== --}}
+  <div id="bahaya-alert" class="bg-status-bahaya text-white" @if ($statusCounts['BAHAYA'] === 0) style="display:none" @endif>
+    <a href="#peta"
+      class="max-w-6xl mx-auto px-4 lg:px-6 py-2.5 flex items-center justify-center gap-2 text-sm font-semibold hover:bg-black/5 transition">
+      <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+      </svg>
+      <span id="bahaya-alert-text"><span class="stat-mono">{{ $statusCounts['BAHAYA'] }}</span> lokasi berstatus BAHAYA
+        saat ini — lihat peta</span>
+      <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+      </svg>
+    </a>
+  </div>
+
+  {{-- ===================== HERO ===================== --}}
   <section class="relative overflow-hidden">
     <div class="absolute -top-24 -left-24 w-96 h-96 bg-primary-300/40 rounded-full blur-3xl"></div>
     <div class="absolute -top-10 right-0 w-80 h-80 bg-primary-200/50 rounded-full blur-3xl"></div>
     <div class="absolute top-40 left-1/2 w-72 h-72 bg-primary-100/60 rounded-full blur-3xl"></div>
 
-    <div class="relative max-w-6xl mx-auto px-4 lg:px-6 pt-16 pb-24 lg:pt-24 lg:pb-32 text-center">
+    <div class="relative max-w-6xl mx-auto px-4 lg:px-6 pt-14 pb-20 lg:pt-20 lg:pb-28 text-center">
       <span
         class="inline-block text-xs font-semibold tracking-wider uppercase text-primary-600 bg-white/70 backdrop-blur-xl border border-white/60 px-4 py-1.5 rounded-full mb-5">
         Peringatan Dini &bull; Real-Time &bull; Terbuka untuk Publik
@@ -18,6 +44,26 @@
         SIGAB memantau ketinggian air dan curah hujan secara otomatis dari sensor lapangan,
         lalu menyiarkan status AMAN, SIAGA, atau BAHAYA secara langsung ke masyarakat dan petugas.
       </p>
+
+      {{-- Ringkasan status live — angka nyata, bukan dekorasi --}}
+      <div class="mt-8 inline-flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
+        <span class="inline-flex items-center gap-2 bg-white/80 backdrop-blur border border-white/60 rounded-full pl-3 pr-4 py-1.5 text-sm shadow-sm">
+          <span class="w-2 h-2 rounded-full bg-status-aman"></span>
+          <span id="stat-aman" class="stat-mono font-semibold text-neutral-950">{{ $statusCounts['AMAN'] }}</span>
+          <span class="text-neutral-500">Aman</span>
+        </span>
+        <span class="inline-flex items-center gap-2 bg-white/80 backdrop-blur border border-white/60 rounded-full pl-3 pr-4 py-1.5 text-sm shadow-sm">
+          <span class="w-2 h-2 rounded-full bg-status-siaga"></span>
+          <span id="stat-siaga" class="stat-mono font-semibold text-neutral-950">{{ $statusCounts['SIAGA'] }}</span>
+          <span class="text-neutral-500">Siaga</span>
+        </span>
+        <span class="inline-flex items-center gap-2 bg-white/80 backdrop-blur border border-white/60 rounded-full pl-3 pr-4 py-1.5 text-sm shadow-sm">
+          <span class="w-2 h-2 rounded-full bg-status-bahaya"></span>
+          <span id="stat-bahaya" class="stat-mono font-semibold text-neutral-950">{{ $statusCounts['BAHAYA'] }}</span>
+          <span class="text-neutral-500">Bahaya</span>
+        </span>
+      </div>
+
       <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
         <a href="#peta" class="btn-primary w-full sm:w-auto">Lihat Peta Pemantauan</a>
         <a href="#tentang" class="btn-secondary w-full sm:w-auto">Pelajari Lebih Lanjut</a>
@@ -26,8 +72,6 @@
   </section>
 
   {{-- ===================== BENTO: CARDS FITUR ===================== --}}
-  {{-- Bento layout: kartu pertama besar (2 kolom), dua sisanya bertumpuk
-         di kolom kanan — memberi variasi ukuran khas bento-grid --}}
   <section class="max-w-6xl mx-auto px-4 lg:px-6 -mt-14 relative z-10">
     <div class="grid lg:grid-cols-3 gap-5">
 
@@ -96,11 +140,11 @@
       </div>
       <div class="grid grid-cols-2 gap-5">
         <div class="card p-6 text-center flex flex-col justify-center">
-          <p class="text-4xl font-bold text-primary-700">24/7</p>
+          <p class="stat-mono text-4xl font-bold text-primary-700">24/7</p>
           <p class="text-xs text-neutral-500 mt-1.5">Pemantauan berkelanjutan</p>
         </div>
         <div class="card p-6 text-center flex flex-col justify-center">
-          <p class="text-4xl font-bold text-primary-700">&lt;1 mnt</p>
+          <p class="stat-mono text-4xl font-bold text-primary-700">&lt;1 mnt</p>
           <p class="text-xs text-neutral-500 mt-1.5">Kecepatan notifikasi</p>
         </div>
         <div class="card p-6 text-center col-span-2 flex flex-col justify-center">
@@ -123,7 +167,7 @@
         @foreach ([['no' => '1', 'title' => 'Sensor Membaca Data', 'desc' => 'Perangkat di lapangan membaca tinggi air dan curah hujan setiap saat.'], ['no' => '2', 'title' => 'Dikirim ke Sistem', 'desc' => 'Data dikirim otomatis lewat jaringan ke server pusat SIGAB.'], ['no' => '3', 'title' => 'Dihitung Statusnya', 'desc' => 'Sistem membandingkan data dengan ambang batas AMAN/SIAGA/BAHAYA.'], ['no' => '4', 'title' => 'Disiarkan Real-Time', 'desc' => 'Status ditampilkan di peta ini dan notifikasi dikirim ke petugas.']] as $step)
           <div class="bg-primary-50/70 rounded-3xl p-6 border border-primary-100">
             <div
-              class="w-10 h-10 rounded-2xl bg-primary-600 text-white flex items-center justify-center font-semibold text-sm mb-4">
+              class="stat-mono w-10 h-10 rounded-2xl bg-primary-600 text-white flex items-center justify-center font-semibold text-sm mb-4">
               {{ $step['no'] }}
             </div>
             <h3 class="font-semibold text-neutral-950 mb-1.5 text-sm">{{ $step['title'] }}</h3>
@@ -149,7 +193,7 @@
       </div>
       <div class="lg:col-span-2 card p-8 flex flex-col justify-center gap-6">
         <div>
-          <p class="text-5xl font-bold text-primary-700">{{ $locations->count() }}</p>
+          <p class="stat-mono text-5xl font-bold text-primary-700">{{ $locations->count() }}</p>
           <p class="text-sm text-neutral-500 mt-1.5">Lokasi aktif dipantau saat ini</p>
         </div>
         <div class="pt-5 border-t border-neutral-100 space-y-3">
@@ -176,17 +220,21 @@
               <p class="font-semibold text-neutral-950 group-hover:text-primary-700 transition">{{ $loc['name'] }}</p>
               <p class="text-xs text-neutral-500 mt-0.5">{{ $loc['province'] }}</p>
             </div>
-            <span
-              class="status-badge shrink-0 text-xs px-2.5 py-1 rounded-full font-semibold
-                        {{ match ($loc['latest']['status'] ?? null) {
-                            'BAHAYA' => 'bg-status-bahaya/10 text-status-bahaya',
-                            'SIAGA' => 'bg-status-siaga/10 text-status-siaga',
-                            'AMAN' => 'bg-status-aman/10 text-status-aman',
-                            default => 'bg-neutral-100 text-neutral-500',
-                        } }}">
-              {{ $loc['latest']['status'] ?? 'Belum ada data' }}
-            </span>
+            <x-status-badge :status="$loc['latest']['status'] ?? null" size="sm" class="shrink-0" />
           </div>
+
+          @if ($loc['latest'])
+            <div class="grid grid-cols-2 gap-2 mb-4 text-xs">
+              <div class="panel px-3 py-2">
+                <p class="text-neutral-400">TMA</p>
+                <p class="stat-mono font-semibold text-neutral-950">{{ $loc['latest']['tma_cm'] }} <span class="font-sans font-normal text-neutral-400">cm</span></p>
+              </div>
+              <div class="panel px-3 py-2">
+                <p class="text-neutral-400">Hujan</p>
+                <p class="stat-mono font-semibold text-neutral-950">{{ $loc['latest']['hujan_mm'] }} <span class="font-sans font-normal text-neutral-400">mm</span></p>
+              </div>
+            </div>
+          @endif
 
           <div class="flex items-center justify-between pt-4 border-t border-neutral-100">
             <div class="flex items-center gap-1.5 text-xs text-neutral-500">
@@ -219,38 +267,57 @@
           attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        const statusColor = {
-          AMAN: '#2ba84a',
-          SIAGA: '#e3a008',
-          BAHAYA: '#e02424'
-        };
         const markers = {};
         const locations = @json($locations);
+        const statusByLocation = {};
 
         locations.forEach(loc => {
+          statusByLocation[loc.id] = loc.latest?.status ?? null;
           if (!loc.latitude || !loc.longitude) return;
 
-          const color = statusColor[loc.latest?.status] ?? '#9aa6a4';
+          const style = window.statusStyle(loc.latest?.status);
           const marker = L.circleMarker([loc.latitude, loc.longitude], {
             radius: 10,
-            fillColor: color,
+            fillColor: style.hex,
             color: '#fff',
             weight: 2,
             fillOpacity: 0.9
-          }).addTo(map).bindPopup(`<b>${loc.name}</b><br>Status: ${loc.latest?.status ?? 'Belum ada data'}`);
+          }).addTo(map).bindPopup(`<b>${loc.name}</b><br>Status: ${style.label}`);
           markers[loc.id] = marker;
+        });
 
+        function recomputeCounts() {
+          const counts = { AMAN: 0, SIAGA: 0, BAHAYA: 0 };
+          Object.values(statusByLocation).forEach(s => { if (counts[s] !== undefined) counts[s]++; });
+
+          document.getElementById('stat-aman').textContent = counts.AMAN;
+          document.getElementById('stat-siaga').textContent = counts.SIAGA;
+          document.getElementById('stat-bahaya').textContent = counts.BAHAYA;
+
+          const banner = document.getElementById('bahaya-alert');
+          const bannerText = document.getElementById('bahaya-alert-text');
+          if (counts.BAHAYA > 0) {
+            banner.style.display = '';
+            bannerText.innerHTML = `<span class="stat-mono">${counts.BAHAYA}</span> lokasi berstatus BAHAYA saat ini — lihat peta`;
+          } else {
+            banner.style.display = 'none';
+          }
+        }
+
+        locations.forEach(loc => {
           window.Echo.channel(`location.${loc.id}`).listen('.sensor.updated', (data) => {
-            const newColor = statusColor[data.status] ?? '#9aa6a4';
-            markers[loc.id].setStyle({
-              fillColor: newColor
-            });
-            markers[loc.id].setPopupContent(`<b>${loc.name}</b><br>Status: ${data.status}`);
+            statusByLocation[loc.id] = data.status;
+            recomputeCounts();
+
+            const style = window.statusStyle(data.status);
+            if (markers[loc.id]) {
+              markers[loc.id].setStyle({ fillColor: style.hex });
+              markers[loc.id].setPopupContent(`<b>${loc.name}</b><br>Status: ${style.label}`);
+            }
 
             const card = document.getElementById(`card-${loc.id}`);
             if (card) {
-              const badge = card.querySelector('.status-badge');
-              if (badge) badge.textContent = data.status;
+              window.applyStatusBadge(card.querySelector('.status-badge'), data.status);
             }
           });
         });

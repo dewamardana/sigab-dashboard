@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Controllers\AdminMonitoringController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\NotificationLogController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
@@ -23,10 +26,6 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth', 'role:superadmin'])->group(function () {
-    Route::get('/dashboard-test', function () {
-        return 'Halo Superadmin, akses berhasil!';
-    });
-
     Route::resource('locations', LocationController::class)
         ->except(['create', 'edit', 'show']);
 
@@ -38,6 +37,19 @@ Route::middleware(['auth', 'role:superadmin'])->group(function () {
 Route::middleware(['auth', 'role_or_permission:superadmin|admin_lokasi'])->group(function () {
     Route::resource('devices', DeviceController::class)
         ->except(['create', 'edit', 'show']);
+
+    Route::get('/dashboard/monitoring', [AdminMonitoringController::class, 'index'])
+        ->name('admin.monitoring');
+    Route::get('/dashboard/monitoring/{location}/{device}', [AdminMonitoringController::class, 'device'])
+        ->name('admin.monitoring.device');
+
+    Route::get('/notifications', [NotificationLogController::class, 'index'])
+        ->name('notifications.index');
+
+    Route::get('/reports', [ReportController::class, 'index'])
+        ->name('reports.index');
+    Route::get('/reports/export', [ReportController::class, 'export'])
+        ->name('reports.export');
 });
 
 require __DIR__ . '/auth.php';

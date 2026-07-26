@@ -10,10 +10,11 @@ class SensorType extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['code', 'name', 'unit', 'icon', 'is_core'];
+    protected $fillable = ['code', 'name', 'unit', 'icon', 'is_core', 'is_public'];
 
     protected $casts = [
         'is_core' => 'boolean',
+        'is_public' => 'boolean',
     ];
 
     public function devices(): BelongsToMany

@@ -37,8 +37,42 @@
         @apply bg-white/60 backdrop-blur-2xl border border-white/60 rounded-3xl
                shadow-[0_8px_30px_rgb(4,15,15,0.06)];
     }
+
+    /* Kartu tanpa blur — dipakai untuk panel data/instrumen (gauge, angka
+       sensor) supaya angka tetap tajam, beda dari .card yang glassy */
+    .panel {
+        @apply bg-neutral-50 border border-neutral-200 rounded-2xl
+               shadow-[0_1px_2px_rgb(4,15,15,0.04)];
+    }
+
+    /* Angka telemetri — dipakai untuk semua pembacaan sensor supaya
+       terasa seperti alat ukur, beda dari teks UI biasa (Inter) */
+    .stat-mono {
+        @apply font-mono tabular-nums;
+    }
+
+    /* Pita peringatan status — dipakai di puncak halaman device/lokasi
+       saat status SIAGA/BAHAYA, supaya tidak perlu men-scroll untuk tahu
+       kondisi genting */
+    .alert-banner {
+        @apply flex items-center gap-3 rounded-2xl border p-4;
+    }
+    .alert-banner-aman {
+        @apply alert-banner bg-primary-50 border-primary-200 text-primary-800;
+    }
+    .alert-banner-siaga {
+        @apply alert-banner bg-[#fdf3d9] border-[#f2d98a] text-[#7a5b04];
+    }
+    .alert-banner-bahaya {
+        @apply alert-banner bg-[#fbdede] border-[#f3b3b3] text-[#7a1616];
+    }
 }
 .map-wrapper {
     position: relative;
     isolation: isolate;
+}
+
+/* Jaga-jaga supaya tooltip ApexCharts tidak ketutup elemen lain. */
+.apexcharts-tooltip {
+    z-index: 30 !important;
 }

@@ -18,6 +18,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleAndAdminSeeder::class,
             SensorTypeSeeder::class,
+            LocationSeeder::class,
+            DeviceSeeder::class,
         ]);
     }
 }

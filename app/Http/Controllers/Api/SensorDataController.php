@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\AdminSensorDataUpdated;
 use App\Events\SensorDataUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Device;
@@ -50,8 +51,11 @@ class SensorDataController extends Controller
             'recorded_at' => now(),
         ]);
 
-        // Siarkan ke Reverb — dashboard yang sedang terbuka otomatis update
+        // Siarkan ke Reverb — dashboard yang sedang terbuka otomatis update.
+        // Dua event: publik (ringkas, ke channel biasa) dan admin (lengkap
+        // semua sensor, ke channel privat admin.location.{id}).
         event(new SensorDataUpdated($sensorData));
+        event(new AdminSensorDataUpdated($sensorData));
 
         Cache::forever("location.{$device->location_id}.latest", [
             'status' => $sensorData->status,

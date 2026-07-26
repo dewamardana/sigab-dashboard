@@ -1,34 +1,42 @@
 <x-app-layout>
 
-  <div class="max-w-5xl mx-[18rem] space-y-6 mt-[4rem]">
-    <div>
-      <h2 class="text-lg font-semibold text-neutral-950">Selamat datang, {{ auth()->user()->name }}</h2>
-      <p class="text-sm text-neutral-600">Peran: {{ auth()->user()->getRoleNames()->first() ?? '-' }}</p>
+  <div class="max-w-5xl mx-auto space-y-6 p-4 sm:ml-64 mt-14">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-semibold text-neutral-950">Selamat datang, {{ auth()->user()->name }}</h2>
+        <p class="text-sm text-neutral-600">Peran: {{ auth()->user()->getRoleNames()->first() ?? '-' }}</p>
+      </div>
+      <span class="inline-flex items-center gap-1.5 text-[11px] font-mono font-medium text-primary-600 bg-primary-50 border border-primary-100 rounded-full px-3 py-1.5">
+        <span class="relative flex h-1.5 w-1.5">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary-500"></span>
+        </span>
+        LIVE
+      </span>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="location-cards">
       @forelse ($locations as $loc)
-        <a href="{{ route('public.show', $loc['id']) }}"
+        <a href="{{ route('public.show', $loc['id']) }}" data-location-id="{{ $loc['id'] }}"
           class="block card rounded-2xl p-5 hover:shadow-md hover:-translate-y-0.5 transition-all">
           <div class="flex items-center justify-between mb-2">
             <p class="font-medium text-neutral-950">{{ $loc['name'] }}</p>
-            <span
-              class="text-xs px-2 py-1 rounded-full font-medium
-                        {{ match ($loc['latest']['status'] ?? null) {
-                            'BAHAYA' => 'bg-status-bahaya/10 text-status-bahaya',
-                            'SIAGA' => 'bg-status-siaga/10 text-status-siaga',
-                            'AMAN' => 'bg-status-aman/10 text-status-aman',
-                            default => 'bg-primary-100 text-primary-500',
-                        } }}">
-              {{ $loc['latest']['status'] ?? 'Belum ada data' }}
-            </span>
+            <x-status-badge :status="$loc['latest']['status'] ?? null" size="sm" />
           </div>
-          <p class="text-xs text-primary-500">{{ $loc['province'] }}</p>
+          <p class="text-xs text-primary-500 mb-3">{{ $loc['province'] }}</p>
           @if ($loc['latest'])
-            <div class="mt-3 text-xs text-primary-700 grid grid-cols-2 gap-2">
-              <div>TMA: <span class="font-medium">{{ $loc['latest']['tma_cm'] }} cm</span></div>
-              <div>Hujan: <span class="font-medium">{{ $loc['latest']['hujan_mm'] }} mm</span></div>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div class="panel px-3 py-2">
+                <p class="text-neutral-400">TMA</p>
+                <p data-field="tma_cm" class="stat-mono font-semibold text-neutral-950">{{ $loc['latest']['tma_cm'] }} cm</p>
+              </div>
+              <div class="panel px-3 py-2">
+                <p class="text-neutral-400">Hujan</p>
+                <p data-field="hujan_mm" class="stat-mono font-semibold text-neutral-950">{{ $loc['latest']['hujan_mm'] }} mm</p>
+              </div>
             </div>
+          @else
+            <p class="text-xs text-neutral-400">Belum ada data masuk.</p>
           @endif
         </a>
       @empty
@@ -36,5 +44,22 @@
       @endforelse
     </div>
   </div>
+
+  @push('scripts')
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('[data-location-id]').forEach(card => {
+          const id = card.dataset.locationId;
+          window.Echo.channel(`location.${id}`).listen('.sensor.updated', (data) => {
+            window.applyStatusBadge(card.querySelector('.status-badge'), data.status);
+            const tmaEl = card.querySelector('[data-field="tma_cm"]');
+            const hujanEl = card.querySelector('[data-field="hujan_mm"]');
+            if (tmaEl) tmaEl.textContent = `${data.tma_cm} cm`;
+            if (hujanEl) hujanEl.textContent = `${data.hujan_mm} mm`;
+          });
+        });
+      });
+    </script>
+  @endpush
 
 </x-app-layout>

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('unit')->nullable();
             $table->string('icon')->nullable();
             $table->boolean('is_core')->default(false);
+            $table->boolean('is_public')->default(true);
             $table->timestamps();
         });
     }

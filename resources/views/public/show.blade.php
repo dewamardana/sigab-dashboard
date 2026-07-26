@@ -1,48 +1,96 @@
 <x-public-layout :title="$location->name">
 
-  <section class="relative overflow-hidden">
-    <div class="absolute -top-20 -right-20 w-80 h-80 bg-primary-200/50 rounded-full blur-3xl"></div>
-    <div class="relative max-w-5xl mx-auto px-4 lg:px-6 pt-10 pb-6">
-      <a href="{{ route('public.index') }}#peta"
-        class="text-sm text-primary-600 hover:text-primary-800 inline-flex items-center gap-1">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-        Kembali ke Peta
-      </a>
-      <h1 class="text-2xl sm:text-3xl font-bold text-neutral-950 mt-3">{{ $location->name }}</h1>
-      <p class="text-sm text-neutral-600">{{ $location->province }} &bull; {{ $deviceCards->count() }} perangkat
-        terpasang</p>
+  @php
+    $overall = $statusCounts['BAHAYA'] > 0 ? 'BAHAYA' : ($statusCounts['SIAGA'] > 0 ? 'SIAGA' : 'AMAN');
+    $iconPaths = [
+        'suhu' => '<rect x="10" y="3" width="4" height="12" rx="2"/><circle cx="12" cy="18" r="3"/>',
+        'kelembapan' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3c3 4 6 7.5 6 11a6 6 0 1 1-12 0c0-3.5 3-7 6-11Z"/>',
+        'angin_kmph' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3 8h11a3 3 0 1 0-3-3"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 12h15a3 3 0 1 1-3 3"/>',
+        'baterai_v' => '<rect x="2" y="7" width="18" height="10" rx="2.5"/><rect x="21" y="10" width="2" height="4" rx="1" fill="currentColor" stroke="none"/>',
+    ];
+    $fallbackIcon = '<circle cx="12" cy="12" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 2"/>';
+  @endphp
+
+  <main class="max-w-6xl mx-auto px-4 lg:px-6 py-[21px] space-y-[21px]">
+
+    <a href="{{ route('public.index') }}#peta" class="text-[13px] text-primary-600 inline-flex items-center gap-1">
+      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+      </svg>
+      Semua lokasi
+    </a>
+
+    {{-- ===================== HERO LOKASI ===================== --}}
+    <div class="relative overflow-hidden rounded-2xl p-[21px] text-white" style="background: linear-gradient(135deg, #2ba84a, #15421c);">
+      <svg class="absolute inset-0 w-full h-full opacity-[0.12]" viewBox="0 0 800 200" preserveAspectRatio="none" fill="none">
+        <path d="M0 60 C120 20,180 20,300 60 S480 100,600 60 S780 20,800 60" stroke="white" stroke-width="3" />
+        <path d="M0 120 C120 80,180 80,300 120 S480 160,600 120 S780 80,800 120" stroke="white" stroke-width="3" />
+        <path d="M0 180 C120 140,180 140,300 180 S480 220,600 180 S780 140,800 180" stroke="white" stroke-width="3" />
+      </svg>
+      <div class="relative grid md:grid-cols-[1fr_auto] gap-[21px] items-center">
+        <div>
+          <div class="flex items-center gap-2 mb-[13px] flex-wrap">
+            <h1 class="text-[26px] font-bold leading-none">{{ $location->name }}</h1>
+            <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-white/15 backdrop-blur">{{ $overall }}</span>
+          </div>
+          <p class="text-[12px] text-primary-100/80 mb-[13px]">{{ $location->province }} &middot; {{ $deviceCards->count() }} perangkat terpasang</p>
+          <div class="flex gap-[21px]">
+            <div><p class="stat-mono text-[24px] font-bold leading-none">{{ $statusCounts['AMAN'] }}</p><p class="text-[11px] text-primary-100/80 mt-1">Aman</p></div>
+            <div><p class="stat-mono text-[24px] font-bold leading-none text-[#ffe9ad]">{{ $statusCounts['SIAGA'] }}</p><p class="text-[11px] text-primary-100/80 mt-1">Siaga</p></div>
+            <div><p class="stat-mono text-[24px] font-bold leading-none text-[#ffc4c4]">{{ $statusCounts['BAHAYA'] }}</p><p class="text-[11px] text-primary-100/80 mt-1">Bahaya</p></div>
+          </div>
+        </div>
+        <div id="minimap" class="w-full md:w-[130px] h-[100px] md:h-[130px] rounded-xl overflow-hidden ring-2 ring-white/30 shrink-0"></div>
+      </div>
     </div>
-  </section>
 
-  <main class="max-w-5xl mx-auto px-4 lg:px-6 pb-16 space-y-10">
-
-    {{-- Daftar device — bento card --}}
+    {{-- ===================== KARTU DEVICE — SEMUA SENSOR, TANPA GRAFIK ===================== --}}
     <div>
-      <h2 class="text-sm font-semibold text-neutral-700 uppercase tracking-wider mb-4">Perangkat di Lokasi Ini</h2>
-      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <h2 class="text-[16px] font-semibold text-neutral-950 mb-[13px]">Perangkat di lokasi ini</h2>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-[13px]">
         @forelse ($deviceCards as $d)
-          <a href="{{ route('public.device', [$location->id, $d['id']]) }}"
-            class="group card p-6 hover:shadow-[0_16px_40px_rgb(4,15,15,0.08)] hover:-translate-y-1 transition-all duration-200">
-            <div class="flex items-start justify-between mb-3">
-              <p class="font-semibold text-neutral-950 group-hover:text-primary-700 transition">{{ $d['name'] }}</p>
-              <span
-                class="text-xs px-2 py-1 rounded-full font-medium shrink-0
-                            {{ match ($d['latest']['status'] ?? null) {
-                                'BAHAYA' => 'bg-status-bahaya/10 text-status-bahaya',
-                                'SIAGA' => 'bg-status-siaga/10 text-status-siaga',
-                                'AMAN' => 'bg-status-aman/10 text-status-aman',
-                                default => 'bg-neutral-100 text-neutral-500',
-                            } }}">
-                {{ $d['latest']['status'] ?? 'Belum ada data' }}
-              </span>
+          <a href="{{ route('public.device', [$location->id, $d['id']]) }}" data-device-id="{{ $d['device_id'] }}"
+            class="block bg-white rounded-2xl border border-neutral-200 p-[13px] hover:border-primary-300 hover:shadow-sm transition">
+            <div class="flex items-start justify-between mb-[13px]">
+              <p class="font-semibold text-neutral-950 text-[14px]">{{ $d['name'] }}</p>
+              <x-status-badge :status="$d['latest']['status'] ?? null" size="sm" />
             </div>
-            <p class="text-xs text-neutral-400 font-mono mb-4">{{ $d['device_id'] }}</p>
-            @if ($d['latest'])
-              <div class="text-xs text-neutral-600 grid grid-cols-2 gap-2 pt-3 border-t border-neutral-100">
-                <div>TMA: <span class="font-medium text-neutral-950">{{ $d['latest']['tma_cm'] }} cm</span></div>
-                <div>Hujan: <span class="font-medium text-neutral-950">{{ $d['latest']['hujan_mm'] }} mm</span></div>
+
+            {{-- TMA & Hujan — dua bar zona, penentu status --}}
+            <div class="space-y-[8px] mb-[13px]">
+              <div>
+                <div class="flex items-center justify-between text-[11px] text-neutral-500 mb-1">
+                  <span>Tinggi muka air</span>
+                  <span data-field="tma_cm" class="stat-mono font-semibold text-neutral-950">{{ $d['latest']['tma_cm'] ?? '-' }} cm</span>
+                </div>
+                <div data-bar-gauge="tma_cm" data-value="{{ $d['latest']['tma_cm'] ?? 0 }}" data-siaga="{{ $d['threshold_tma_siaga'] }}"
+                  data-bahaya="{{ $d['threshold_tma_bahaya'] }}" data-max="{{ $d['tma_max'] }}"></div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between text-[11px] text-neutral-500 mb-1">
+                  <span>Curah hujan</span>
+                  <span data-field="hujan_mm" class="stat-mono font-semibold text-neutral-950">{{ $d['latest']['hujan_mm'] ?? '-' }} mm</span>
+                </div>
+                <div data-bar-gauge="hujan_mm" data-value="{{ $d['latest']['hujan_mm'] ?? 0 }}" data-siaga="{{ $d['threshold_hujan_siaga'] }}"
+                  data-bahaya="{{ $d['threshold_hujan_bahaya'] }}" data-max="{{ $d['hujan_max'] }}"></div>
+              </div>
+            </div>
+
+            {{-- Sensor pendukung — ringkas, ikon + angka --}}
+            @if ($d['secondary']->isNotEmpty())
+              <div class="grid grid-cols-2 gap-[8px] pt-[13px] border-t border-neutral-100">
+                @foreach ($d['secondary'] as $s)
+                  <div class="flex items-center gap-[6px]">
+                    <div class="w-6 h-6 rounded-md bg-primary-50 flex items-center justify-center shrink-0">
+                      <svg class="w-3 h-3 text-primary-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        {!! $iconPaths[$s['code']] ?? $fallbackIcon !!}
+                      </svg>
+                    </div>
+                    <span data-field="{{ $s['code'] }}" data-unit="{{ $s['unit'] }}" class="stat-mono text-[12px] font-semibold text-neutral-950 truncate">
+                      {{ $s['value'] ?? '-' }}<span class="text-[10px] font-sans font-normal text-neutral-400"> {{ $s['unit'] }}</span>
+                    </span>
+                  </div>
+                @endforeach
               </div>
             @endif
           </a>
@@ -52,144 +100,63 @@
       </div>
     </div>
 
-    {{-- Grafik gabungan — bento 2 kolom, dropdown filter tunggal --}}
-    <div class="space-y-5" x-data="{ open: false, rangeDays: 7 }">
-      <div class="flex items-center justify-between flex-wrap gap-3">
-        <h2 class="text-sm font-semibold text-neutral-700 uppercase tracking-wider">Grafik Gabungan Semua Perangkat</h2>
-
-        <div class="relative">
-          <button @click="open = !open"
-            class="text-sm font-medium text-primary-600 inline-flex items-center gap-1.5 bg-white/80 backdrop-blur border border-white/60 rounded-full px-4 py-2 shadow-sm">
-            <span x-text="rangeDays === 0 ? 'Semua data' : rangeDays + ' hari terakhir'"></span>
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
-            </svg>
-          </button>
-          <div x-show="open" x-transition @click.outside="open = false" style="display:none"
-            class="absolute right-0 z-20 mt-2 bg-white/95 backdrop-blur-xl border border-white/60 rounded-2xl shadow-lg w-44 overflow-hidden">
-            <ul class="p-2 text-sm text-neutral-700 font-medium">
-              @foreach ([1, 7, 30, 90, 0] as $r)
-                <li>
-                  <button type="button"
-                    @click="rangeDays = {{ $r }}; window.updateAllCombinedCharts({{ $r }}); open = false"
-                    class="w-full text-left px-3 py-2 hover:bg-primary-50 rounded-xl transition">
-                    {{ $r === 0 ? 'Semua data' : $r . ' hari terakhir' }}
-                  </button>
-                </li>
-              @endforeach
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <div class="grid sm:grid-cols-2 gap-5">
-        @forelse ($charts as $chartData)
-          <div class="card p-6">
-            <h3 class="text-sm font-semibold text-neutral-950 mb-1">{{ $chartData['name'] }}</h3>
-            <p class="text-xs text-neutral-500 mb-3">Perbandingan antar perangkat @if ($chartData['unit'])
-                (satuan: {{ $chartData['unit'] }})
-              @endif
-            </p>
-            <div id="combined-chart-{{ $chartData['code'] }}"></div>
-          </div>
-        @empty
-          <div class="card p-10 text-center text-neutral-500 text-sm sm:col-span-2">
-            Belum ada data sensor untuk ditampilkan.
-          </div>
-        @endforelse
-      </div>
-    </div>
-
   </main>
 
   @push('scripts')
     <script>
       document.addEventListener('DOMContentLoaded', () => {
-        const charts = @json($charts);
-        const renderedCharts = {};
-
-        function filterPoints(points, days) {
-          if (days === 0) return points;
-          const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-          return points.filter(p => p[0] >= cutoff);
-        }
-
-        charts.forEach(chartData => {
-          const rawSeries = chartData.series.map(s => ({
-            name: s.name,
-            data: s.data.map(p => [p.x, p.y]),
-          }));
-
-          const seriesIndexByDeviceId = {};
-          chartData.series.forEach((s, i) => {
-            seriesIndexByDeviceId[s.device_id] = i;
+        document.querySelectorAll('[data-bar-gauge]').forEach((el) => {
+          window.createBarGauge(el, {
+            value: Number(el.dataset.value),
+            siaga: Number(el.dataset.siaga),
+            bahaya: Number(el.dataset.bahaya),
+            max: Number(el.dataset.max),
+            size: 'sm',
           });
-
-          const initialSeries = rawSeries.map(s => ({
-            name: s.name,
-            data: filterPoints(s.data, 7)
-          }));
-
-          const chart = new ApexCharts(document.getElementById(`combined-chart-${chartData.code}`), {
-            ...window.softChartDefaults,
-            chart: {
-              ...window.softChartDefaults.chart,
-              height: 220,
-              type: 'line'
-            },
-            tooltip: {
-              ...window.softChartDefaults.tooltip,
-              shared: false,
-              x: {
-                format: 'dd MMM HH:mm'
-              }
-            },
-            series: initialSeries,
-            legend: {
-              show: true,
-              position: 'top',
-              horizontalAlign: 'right',
-              fontSize: '12px'
-            },
-            xaxis: {
-              ...window.softChartDefaults.xaxis,
-              type: 'datetime'
-            },
-          });
-          chart.render();
-          renderedCharts[chartData.code] = {
-            chart,
-            rawSeries,
-            seriesIndexByDeviceId
-          };
         });
 
-        window.updateAllCombinedCharts = function(days) {
-          Object.values(renderedCharts).forEach(({
-            chart,
-            rawSeries
-          }) => {
-            const filtered = rawSeries.map(s => ({
-              name: s.name,
-              data: filterPoints(s.data, days)
-            }));
-            chart.updateSeries(filtered);
-          });
-        };
+        const map = L.map('minimap', { zoomControl: false, dragging: false, scrollWheelZoom: false, attributionControl: false })
+          .setView([{{ $location->latitude }}, {{ $location->longitude }}], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        L.circleMarker([{{ $location->latitude }}, {{ $location->longitude }}], {
+          radius: 6, fillColor: window.statusStyle('{{ $overall }}').hex, color: '#fff', weight: 2, fillOpacity: 1
+        }).addTo(map);
 
         window.Echo.channel('location.{{ $location->id }}').listen('.sensor.updated', (data) => {
-          ['tma_cm', 'hujan_mm'].forEach(code => {
-            const entry = renderedCharts[code];
-            if (!entry) return;
-            const idx = entry.seriesIndexByDeviceId[data.device_id];
-            if (idx === undefined) return;
+          const card = document.querySelector(`[data-device-id="${data.device_id}"]`);
+          if (!card) return;
 
-            const value = code === 'tma_cm' ? data.tma_cm : data.hujan_mm;
-            entry.rawSeries[idx].data.push([new Date(data.recorded_at).getTime(), value]);
+          window.applyStatusBadge(card.querySelector('.status-badge'), data.status);
 
-            const alpineRoot = document.querySelector('[x-data*="rangeDays"]');
-            const activeDays = alpineRoot ? alpineRoot.__x.$data.rangeDays : 7;
-            window.updateAllCombinedCharts(activeDays);
+          const tmaField = card.querySelector('[data-field="tma_cm"]');
+          const hujanField = card.querySelector('[data-field="hujan_mm"]');
+          if (tmaField) tmaField.textContent = `${data.tma_cm} cm`;
+          if (hujanField) hujanField.textContent = `${data.hujan_mm} mm`;
+
+          const tmaBar = card.querySelector('[data-bar-gauge="tma_cm"]');
+          const hujanBar = card.querySelector('[data-bar-gauge="hujan_mm"]');
+          if (tmaBar) {
+            window.createBarGauge(tmaBar, {
+              value: data.tma_cm, siaga: Number(tmaBar.dataset.siaga),
+              bahaya: Number(tmaBar.dataset.bahaya), max: Number(tmaBar.dataset.max), size: 'sm',
+            });
+          }
+          if (hujanBar) {
+            window.createBarGauge(hujanBar, {
+              value: data.hujan_mm, siaga: Number(hujanBar.dataset.siaga),
+              bahaya: Number(hujanBar.dataset.bahaya), max: Number(hujanBar.dataset.max), size: 'sm',
+            });
+          }
+
+          // Sensor pendukung — semua ikut update, bukan cuma TMA & Hujan.
+          const readings = data.readings || {};
+          Object.keys(readings).forEach((code) => {
+            const value = readings[code];
+            const field = card.querySelector(`[data-field="${code}"]`);
+            if (field && value !== null && value !== undefined) {
+              const unit = field.dataset.unit || '';
+              field.innerHTML = `${value}<span class="text-[10px] font-sans font-normal text-neutral-400"> ${unit}</span>`;
+            }
           });
         });
       });

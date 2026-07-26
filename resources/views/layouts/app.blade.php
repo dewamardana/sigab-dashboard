@@ -40,6 +40,17 @@
           Dashboard
         </x-nav-link-sidebar>
 
+        @hasanyrole('superadmin|admin_lokasi')
+          <x-nav-link-sidebar :href="route('admin.monitoring')" :active="request()->routeIs('admin.monitoring')">
+            <x-slot name="icon">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </x-slot>
+            Monitoring Real-Time
+          </x-nav-link-sidebar>
+        @endhasanyrole
+
         @role('superadmin')
           <p class="px-3 pt-4 pb-1 text-xs font-semibold text-primary-400 uppercase tracking-wider">Manajemen</p>
 
@@ -81,7 +92,7 @@
 
         <p class="px-3 pt-4 pb-1 text-xs font-semibold text-primary-400 uppercase tracking-wider">Data</p>
 
-        <x-nav-link-sidebar href="#" :active="false">
+        <x-nav-link-sidebar :href="route('reports.index')" :active="request()->routeIs('reports.*')">
           <x-slot name="icon">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
               <path stroke-linecap="round" stroke-linejoin="round"
@@ -91,7 +102,7 @@
           Riwayat &amp; Laporan
         </x-nav-link-sidebar>
 
-        <x-nav-link-sidebar href="#" :active="false">
+        <x-nav-link-sidebar :href="route('notifications.index')" :active="request()->routeIs('notifications.*')">
           <x-slot name="icon">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
               <path stroke-linecap="round" stroke-linejoin="round"

@@ -3,63 +3,49 @@
 namespace App\Events;
 
 use App\Models\SensorData;
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class SensorDataUpdated implements ShouldBroadcast
+/**
+ * Versi LENGKAP dari SensorDataUpdated — semua jenis sensor yang
+ * terpasang di device (bukan cuma TMA & Hujan), disiarkan HANYA ke
+ * channel privat admin.location.{id}. Otorisasi channel ada di
+ * routes/channels.php: superadmin bisa semua lokasi, admin_lokasi
+ * cuma lokasi yang ditugaskan ke dia.
+ */
+class AdminSensorDataUpdated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
         public SensorData $sensorData
     ) {
-        // Eager load relasi supaya tidak query ulang saat broadcasting
         $this->sensorData->load('device.location', 'device.sensorTypes');
     }
 
-    /**
-     * Channel PUBLIK saja — data lengkap semua sensor DIBOLEHKAN publik
-     * (is_public=true di sensor_types), lewat event terpisah
-     * App\Events\AdminSensorDataUpdated ke channel privat
-     * admin.location.{id} yang menyertakan SEMUA sensor termasuk yang
-     * privat (mis. baterai).
-     */
     public function broadcastOn(): array
     {
         $locationId = $this->sensorData->device->location_id;
 
         return [
-            new Channel("location.{$locationId}"),
+            new PrivateChannel("admin.location.{$locationId}"),
         ];
     }
 
-    /**
-     * Nama event di sisi frontend (dipakai Laravel Echo untuk listen).
-     */
     public function broadcastAs(): string
     {
         return 'sensor.updated';
     }
 
-    /**
-     * Data untuk channel PUBLIK — status & semua sensor yang ditandai
-     * is_public=true (TMA, Hujan, Suhu, Kelembapan, Angin secara default).
-     * Sensor privat (mis. baterai) sengaja TIDAK disertakan di sini —
-     * itu cuma disiarkan lewat AdminSensorDataUpdated ke channel privat.
-     * Karena berbasis flag database, sensor publik baru otomatis ikut
-     * tersiarkan tanpa perlu ubah kode ini.
-     */
     public function broadcastWith(): array
     {
         $device = $this->sensorData->device;
 
         $readings = [];
-        foreach ($device->sensorTypes->where('is_public', true) as $type) {
+        foreach ($device->sensorTypes as $type) {
             $readings[$type->code] = $this->sensorData->getReading($type->code);
         }
 
@@ -67,11 +53,11 @@ class SensorDataUpdated implements ShouldBroadcast
             'device_id' => $device->device_id,
             'location_id' => $device->location_id,
             'location_name' => $device->location->name,
-            'tma_cm' => $this->sensorData->tma_cm,
-            'hujan_mm' => $this->sensorData->hujan_mm,
             'status' => $this->sensorData->status,
             'recorded_at' => $this->sensorData->recorded_at,
             'readings' => $readings,
+            'tma_cm' => $this->sensorData->tma_cm,
+            'hujan_mm' => $this->sensorData->hujan_mm,
         ];
     }
 }

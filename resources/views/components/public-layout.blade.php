@@ -10,7 +10,7 @@
     content="Pantau status ketinggian air dan curah hujan secara real-time di lokasi rawan banjir.">
 
   <link rel="preconnect" href="https://fonts.bunny.net">
-  <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800" rel="stylesheet" />
+  <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800|jetbrains-mono:500,600" rel="stylesheet" />
   @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
@@ -19,9 +19,9 @@
   {{-- ===================== NAVBAR (glass) ===================== --}}
   <header
     class="sticky top-0 z-50 bg-white/60 backdrop-blur-lg border-b border-white/60 shadow-sm shadow-primary-900/5">
-    <nav class="max-w-6xl mx-auto px-4 lg:px-6 h-16 flex items-center justify-between">
+    <nav class="max-w-6xl mx-auto px-4 lg:px-6 h-16 flex items-center justify-between gap-4">
 
-      <a href="{{ route('public.index') }}" class="flex items-center gap-2.5">
+      <a href="{{ route('public.index') }}" class="flex items-center gap-2.5 shrink-0">
         <div class="w-9 h-9 rounded-xl bg-primary-600 flex items-center justify-center shrink-0">
           <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
             <path stroke-linecap="round" stroke-linejoin="round"
@@ -39,7 +39,14 @@
         <a href="{{ route('public.index') }}#peta" class="hover:text-neutral-950 transition">Peta Pemantauan</a>
       </div>
 
-      <div class="hidden md:flex items-center gap-3">
+      <div class="hidden md:flex items-center gap-4 shrink-0">
+        <span class="inline-flex items-center gap-1.5 text-[11px] font-mono font-medium text-primary-600">
+          <span class="relative flex h-1.5 w-1.5">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary-500"></span>
+          </span>
+          LIVE
+        </span>
         <a href="{{ route('login') }}" class="btn-primary !px-4 !py-2">
           Masuk Admin
         </a>
@@ -77,8 +84,8 @@
 
   {{-- ===================== FOOTER ===================== --}}
   <footer class="bg-primary-950 text-primary-200 mt-20">
-    <div class="max-w-6xl mx-auto px-4 lg:px-6 py-10 grid sm:grid-cols-2 gap-6">
-      <div>
+    <div class="max-w-6xl mx-auto px-4 lg:px-6 py-12 grid sm:grid-cols-3 gap-8">
+      <div class="sm:col-span-1">
         <div class="flex items-center gap-2 mb-2">
           <div class="w-7 h-7 rounded-lg bg-primary-600 flex items-center justify-center">
             <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -91,8 +98,25 @@
         <p class="text-sm text-primary-300">Sistem Informasi &amp; Peringatan Dini Banjir — memantau ketinggian air dan
           curah hujan secara real-time untuk keselamatan masyarakat.</p>
       </div>
-      <div class="sm:text-right text-sm text-primary-400 flex sm:justify-end items-end">
-        &copy; {{ date('Y') }} SIGAB. Dikembangkan untuk pemantauan banjir Bali &amp; Jogjakarta.
+
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wider text-primary-400 mb-3">Navigasi</p>
+        <ul class="space-y-2 text-sm text-primary-300">
+          <li><a href="{{ route('public.index') }}#tentang" class="hover:text-white transition">Tentang SIGAB</a></li>
+          <li><a href="{{ route('public.index') }}#cara-kerja" class="hover:text-white transition">Cara Kerja</a></li>
+          <li><a href="{{ route('public.index') }}#peta" class="hover:text-white transition">Peta Pemantauan</a></li>
+          <li><a href="{{ route('login') }}" class="hover:text-white transition">Masuk Admin</a></li>
+        </ul>
+      </div>
+
+      <div class="sm:text-right flex flex-col sm:items-end justify-between">
+        <div class="inline-flex items-center gap-1.5 text-[11px] font-mono text-primary-400 sm:justify-end">
+          <span class="w-1.5 h-1.5 rounded-full bg-primary-500"></span>
+          Data disiarkan real-time via Laravel Reverb
+        </div>
+        <p class="text-sm text-primary-400 mt-4 sm:mt-0">
+          &copy; {{ date('Y') }} SIGAB. Dikembangkan untuk pemantauan banjir Bali &amp; Jogjakarta.
+        </p>
       </div>
     </div>
   </footer>
