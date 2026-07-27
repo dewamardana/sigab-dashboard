@@ -19,7 +19,7 @@ class RoleAndAdminSeeder extends Seeder
 
         // Buat akun superadmin pertama
         $admin = User::firstOrCreate(
-            ['email' => 'timedooracademydewa@gmail.com'],
+            ['email' => 'sigabadmin@gmail.com'],
             [
                 'name' => 'Superadmin SIGAB',
                 'password' => bcrypt('12345678'),
