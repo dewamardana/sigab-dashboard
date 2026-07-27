@@ -36,6 +36,15 @@ class MqttReloadService
                 ->setConnectTimeout(5)
                 ->setSocketTimeout(5);
 
+            // Cuma di-set kalau memang dikonfigurasi — supaya broker anonim
+            // (mis. broker.hivemq.com di setup simulasi lama) tetap jalan
+            // tanpa perlu MQTT_USERNAME/MQTT_PASSWORD diisi.
+            if (config('services.mqtt.username')) {
+                $settings = $settings
+                    ->setUsername(config('services.mqtt.username'))
+                    ->setPassword(config('services.mqtt.password'));
+            }
+
             $mqtt->connect($settings);
             $mqtt->publish(self::RELOAD_TOPIC, $reason, 0);
             $mqtt->disconnect();
