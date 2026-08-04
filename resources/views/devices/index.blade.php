@@ -11,8 +11,8 @@
     <div class="flex items-center justify-between">
       <div>
         <h2 class="text-lg font-semibold text-neutral-950">Manajemen Perangkat</h2>
-        <p class="text-sm text-neutral-600">Atur threshold status banjir per perangkat — Node-RED membaca ini
-          otomatis.</p>
+        <p class="text-sm text-neutral-600">Daftarkan perangkat & atur sensor yang dimiliki — status banjir
+          sekarang dihitung langsung di microcontroller (fuzzy), bukan dari ambang di sini.</p>
       </div>
       @if ($locations->count() > 0)
         <button @click="showAddModal = true"

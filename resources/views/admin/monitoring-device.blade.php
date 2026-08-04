@@ -1,6 +1,20 @@
 <x-app-layout :title="$device->name ?: $device->device_id">
   @php
-    $displaySensors = $sensorTypes; // sudah diurutkan is_core dulu dari controller
+    // Ikon per kode sensor - lihat catatan yang sama di public/device.blade.php.
+    $iconPaths = [
+        'suhu' => '<rect x="10" y="3" width="4" height="12" rx="2"/><circle cx="12" cy="18" r="3"/>',
+        'kelembapan' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3c3 4 6 7.5 6 11a6 6 0 1 1-12 0c0-3.5 3-7 6-11Z"/>',
+        'angin_kmph' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3 8h11a3 3 0 1 0-3-3"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 12h15a3 3 0 1 1-3 3"/>',
+        'baterai_v' => '<rect x="2" y="7" width="18" height="10" rx="2.5"/><rect x="21" y="10" width="2" height="4" rx="1" fill="currentColor" stroke="none"/>',
+        'tma_cm' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3 9c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 15c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"/>',
+        'hujan_mm' => '<path stroke-linecap="round" stroke-linejoin="round" d="M6 14a4 4 0 0 1 .5-7.97A5.5 5.5 0 0 1 17 8a3.5 3.5 0 0 1-1 6.9H6Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l-1 2M13 18l-1 2M17 18l-1 2"/>',
+        'hujan_intensitas' => '<path stroke-linecap="round" stroke-linejoin="round" d="M6 14a4 4 0 0 1 .5-7.97A5.5 5.5 0 0 1 17 8a3.5 3.5 0 0 1-1 6.9H6Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l-1 2M13 18l-1 2M17 18l-1 2"/>',
+        'hujan_kategori' => '<path stroke-linecap="round" stroke-linejoin="round" d="M6 16a4 4 0 0 1 .5-7.97A5.5 5.5 0 0 1 17 9a3.5 3.5 0 0 1-1 6.9H6Z"/>',
+        'freeboard_m' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M9 6l3-3 3 3M9 18l3 3 3-3"/>',
+        'status_skor' => '<path stroke-linecap="round" stroke-linejoin="round" d="M4 15a8 8 0 1 1 16 0"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 15l3.5-4.5"/><circle cx="12" cy="15" r="1" fill="currentColor" stroke="none"/>',
+        'level_kritis' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 4 3 19h18L12 4Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v4"/><circle cx="12" cy="17" r="0.7" fill="currentColor" stroke="none"/>',
+    ];
+    $fallbackIcon = '<circle cx="12" cy="12" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 2"/>';
   @endphp
 
   <div class="max-w-6xl mx-auto space-y-[21px] p-4 sm:ml-64 mt-14">
