@@ -47,12 +47,11 @@ class SensorDataUpdated implements ShouldBroadcast
     }
 
     /**
-     * Data untuk channel PUBLIK — status & semua sensor yang ditandai
-     * is_public=true (TMA, Hujan, Suhu, Kelembapan, Angin secara default).
-     * Sensor privat (mis. baterai) sengaja TIDAK disertakan di sini —
-     * itu cuma disiarkan lewat AdminSensorDataUpdated ke channel privat.
-     * Karena berbasis flag database, sensor publik baru otomatis ikut
-     * tersiarkan tanpa perlu ubah kode ini.
+     * Data untuk channel PUBLIK — status + semua sensor yang ditandai
+     * is_public=true (dihitung dinamis dari database, bukan nama sensor
+     * yang di-hardcode). REVISI FUZZY ON-DEVICE: tidak ada lagi top-level
+     * tma_cm/hujan_mm terpisah - keduanya sekarang cuma entri biasa di
+     * dalam `readings`, sama seperti sensor lain.
      */
     public function broadcastWith(): array
     {
@@ -67,8 +66,6 @@ class SensorDataUpdated implements ShouldBroadcast
             'device_id' => $device->device_id,
             'location_id' => $device->location_id,
             'location_name' => $device->location->name,
-            'tma_cm' => $this->sensorData->tma_cm,
-            'hujan_mm' => $this->sensorData->hujan_mm,
             'status' => $this->sensorData->status,
             'recorded_at' => $this->sensorData->recorded_at,
             'readings' => $readings,

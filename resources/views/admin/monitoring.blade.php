@@ -46,28 +46,19 @@
                         {{ $r['value'] ?? '-' }} {{ $r['unit'] }}
                       </span>
                     </div>
-                    <div data-bar-gauge="{{ $r['code'] }}" data-value="{{ $r['value'] ?? 0 }}"
-                      data-siaga="{{ $r['code'] === 'tma_cm' ? $d['threshold_tma_siaga'] : $d['threshold_hujan_siaga'] }}"
-                      data-bahaya="{{ $r['code'] === 'tma_cm' ? $d['threshold_tma_bahaya'] : $d['threshold_hujan_bahaya'] }}"
-                      data-max="{{ $r['code'] === 'tma_cm' ? $d['tma_max'] : $d['hujan_max'] }}"></div>
+                    <div class="grid grid-cols-2 gap-2 pt-3 border-t border-neutral-100">
+                    @foreach ($d['readings'] as $r)
+                      <div>
+                        <p>
+                          <span data-field="{{ $r['code'] }}" data-unit="{{ $r['unit'] }}" class="stat-mono text-[13px] font-semibold text-neutral-950">{{ $r['value'] ?? '-' }}</span>
+                          <span class="text-[10px] text-neutral-400">{{ $r['unit'] }}</span>
+                        </p>
+                        <p class="text-[10px] text-neutral-500">{{ $r['name'] }}</p>
+                      </div>
+                    @endforeach
                   </div>
                 @endforeach
               </div>
-
-              @php $secondary = $d['readings']->where('is_core', false); @endphp
-              @if ($secondary->isNotEmpty())
-                <div class="grid grid-cols-2 gap-2 pt-3 border-t border-neutral-100">
-                  @foreach ($secondary as $r)
-                    <div>
-                      <p>
-                        <span data-field="{{ $r['code'] }}" data-unit="{{ $r['unit'] }}" class="stat-mono text-[13px] font-semibold text-neutral-950">{{ $r['value'] ?? '-' }}</span>
-                        <span class="text-[10px] text-neutral-400">{{ $r['unit'] }}</span>
-                      </p>
-                      <p class="text-[10px] text-neutral-500">{{ $r['name'] }}</p>
-                    </div>
-                  @endforeach
-                </div>
-              @endif
 
               <p class="text-[11px] text-primary-600 font-medium mt-3 pt-3 border-t border-neutral-100 inline-flex items-center gap-1">
                 Lihat riwayat &amp; grafik

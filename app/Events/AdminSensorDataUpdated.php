@@ -11,7 +11,7 @@ use Illuminate\Queue\SerializesModels;
 
 /**
  * Versi LENGKAP dari SensorDataUpdated — semua jenis sensor yang
- * terpasang di device (bukan cuma TMA & Hujan), disiarkan HANYA ke
+ * terpasang di device (bukan cuma yang is_public), disiarkan HANYA ke
  * channel privat admin.location.{id}. Otorisasi channel ada di
  * routes/channels.php: superadmin bisa semua lokasi, admin_lokasi
  * cuma lokasi yang ditugaskan ke dia.
@@ -40,6 +40,7 @@ class AdminSensorDataUpdated implements ShouldBroadcast
         return 'sensor.updated';
     }
 
+   
     public function broadcastWith(): array
     {
         $device = $this->sensorData->device;
@@ -56,8 +57,6 @@ class AdminSensorDataUpdated implements ShouldBroadcast
             'status' => $this->sensorData->status,
             'recorded_at' => $this->sensorData->recorded_at,
             'readings' => $readings,
-            'tma_cm' => $this->sensorData->tma_cm,
-            'hujan_mm' => $this->sensorData->hujan_mm,
         ];
     }
 }

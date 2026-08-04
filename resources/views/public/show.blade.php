@@ -55,31 +55,9 @@
               <p class="font-semibold text-neutral-950 text-[14px]">{{ $d['name'] }}</p>
               <x-status-badge :status="$d['latest']['status'] ?? null" size="sm" />
             </div>
-
-            {{-- TMA & Hujan — dua bar zona, penentu status --}}
-            <div class="space-y-[8px] mb-[13px]">
-              <div>
-                <div class="flex items-center justify-between text-[11px] text-neutral-500 mb-1">
-                  <span>Tinggi muka air</span>
-                  <span data-field="tma_cm" class="stat-mono font-semibold text-neutral-950">{{ $d['latest']['tma_cm'] ?? '-' }} cm</span>
-                </div>
-                <div data-bar-gauge="tma_cm" data-value="{{ $d['latest']['tma_cm'] ?? 0 }}" data-siaga="{{ $d['threshold_tma_siaga'] }}"
-                  data-bahaya="{{ $d['threshold_tma_bahaya'] }}" data-max="{{ $d['tma_max'] }}"></div>
-              </div>
-              <div>
-                <div class="flex items-center justify-between text-[11px] text-neutral-500 mb-1">
-                  <span>Curah hujan</span>
-                  <span data-field="hujan_mm" class="stat-mono font-semibold text-neutral-950">{{ $d['latest']['hujan_mm'] ?? '-' }} mm</span>
-                </div>
-                <div data-bar-gauge="hujan_mm" data-value="{{ $d['latest']['hujan_mm'] ?? 0 }}" data-siaga="{{ $d['threshold_hujan_siaga'] }}"
-                  data-bahaya="{{ $d['threshold_hujan_bahaya'] }}" data-max="{{ $d['hujan_max'] }}"></div>
-              </div>
-            </div>
-
-            {{-- Sensor pendukung — ringkas, ikon + angka --}}
-            @if ($d['secondary']->isNotEmpty())
+            @if ($d['sensors']->isNotEmpty())
               <div class="grid grid-cols-2 gap-[8px] pt-[13px] border-t border-neutral-100">
-                @foreach ($d['secondary'] as $s)
+                @foreach ($d['sensors'] as $s)
                   <div class="flex items-center gap-[6px]">
                     <div class="w-6 h-6 rounded-md bg-primary-50 flex items-center justify-center shrink-0">
                       <svg class="w-3 h-3 text-primary-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -87,7 +65,7 @@
                       </svg>
                     </div>
                     <span data-field="{{ $s['code'] }}" data-unit="{{ $s['unit'] }}" class="stat-mono text-[12px] font-semibold text-neutral-950 truncate">
-                      {{ $s['value'] ?? '-' }}<span class="text-[10px] font-sans font-normal text-neutral-400"> {{ $s['unit'] }}</span>
+                      {{ $s['value'] ?? '-' }}
                     </span>
                   </div>
                 @endforeach
@@ -127,26 +105,6 @@
           if (!card) return;
 
           window.applyStatusBadge(card.querySelector('.status-badge'), data.status);
-
-          const tmaField = card.querySelector('[data-field="tma_cm"]');
-          const hujanField = card.querySelector('[data-field="hujan_mm"]');
-          if (tmaField) tmaField.textContent = `${data.tma_cm} cm`;
-          if (hujanField) hujanField.textContent = `${data.hujan_mm} mm`;
-
-          const tmaBar = card.querySelector('[data-bar-gauge="tma_cm"]');
-          const hujanBar = card.querySelector('[data-bar-gauge="hujan_mm"]');
-          if (tmaBar) {
-            window.createBarGauge(tmaBar, {
-              value: data.tma_cm, siaga: Number(tmaBar.dataset.siaga),
-              bahaya: Number(tmaBar.dataset.bahaya), max: Number(tmaBar.dataset.max), size: 'sm',
-            });
-          }
-          if (hujanBar) {
-            window.createBarGauge(hujanBar, {
-              value: data.hujan_mm, siaga: Number(hujanBar.dataset.siaga),
-              bahaya: Number(hujanBar.dataset.bahaya), max: Number(hujanBar.dataset.max), size: 'sm',
-            });
-          }
 
           // Sensor pendukung — semua ikut update, bukan cuma TMA & Hujan.
           const readings = data.readings || {};

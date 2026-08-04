@@ -17,10 +17,6 @@ return new class extends Migration
             $table->foreignId('location_id')->constrained()->cascadeOnDelete();
             $table->string('name')->nullable();
             $table->boolean('is_active')->default(true);
-            $table->float('threshold_tma_siaga')->default(100);
-            $table->float('threshold_tma_bahaya')->default(200);
-            $table->float('threshold_hujan_siaga')->default(5);
-            $table->float('threshold_hujan_bahaya')->default(15);
             $table->string('telegram_chat_id')->nullable();
             $table->timestamps();
         });
