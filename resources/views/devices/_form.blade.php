@@ -25,33 +25,6 @@
   <x-input-error :messages="$errors->get('location_id')" class="mt-1.5" />
 </div>
 
-<div class="grid grid-cols-2 gap-3">
-  <div>
-    <label class="block mb-1.5 text-sm font-medium text-neutral-950">TMA Siaga (cm)</label>
-    <input type="number" step="0.1" name="threshold_tma_siaga" value="{{ old('threshold_tma_siaga', 100) }}"
-      required class="w-full rounded-lg border-primary-200 text-sm focus:border-primary-500 focus:ring-primary-500/30">
-    <x-input-error :messages="$errors->get('threshold_tma_siaga')" class="mt-1.5" />
-  </div>
-  <div>
-    <label class="block mb-1.5 text-sm font-medium text-neutral-950">TMA Bahaya (cm)</label>
-    <input type="number" step="0.1" name="threshold_tma_bahaya" value="{{ old('threshold_tma_bahaya', 200) }}"
-      required class="w-full rounded-lg border-primary-200 text-sm focus:border-primary-500 focus:ring-primary-500/30">
-    <x-input-error :messages="$errors->get('threshold_tma_bahaya')" class="mt-1.5" />
-  </div>
-  <div>
-    <label class="block mb-1.5 text-sm font-medium text-neutral-950">Hujan Siaga (mm)</label>
-    <input type="number" step="0.1" name="threshold_hujan_siaga" value="{{ old('threshold_hujan_siaga', 5) }}"
-      required class="w-full rounded-lg border-primary-200 text-sm focus:border-primary-500 focus:ring-primary-500/30">
-    <x-input-error :messages="$errors->get('threshold_hujan_siaga')" class="mt-1.5" />
-  </div>
-  <div>
-    <label class="block mb-1.5 text-sm font-medium text-neutral-950">Hujan Bahaya (mm)</label>
-    <input type="number" step="0.1" name="threshold_hujan_bahaya" value="{{ old('threshold_hujan_bahaya', 15) }}"
-      required class="w-full rounded-lg border-primary-200 text-sm focus:border-primary-500 focus:ring-primary-500/30">
-    <x-input-error :messages="$errors->get('threshold_hujan_bahaya')" class="mt-1.5" />
-  </div>
-</div>
-
 <div>
   <label class="block mb-1.5 text-sm font-medium text-neutral-950">Telegram Chat ID (opsional)</label>
   <input type="text" name="telegram_chat_id" value="{{ old('telegram_chat_id') }}"

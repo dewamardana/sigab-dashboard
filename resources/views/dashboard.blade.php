@@ -25,16 +25,9 @@
           </div>
           <p class="text-xs text-primary-500 mb-3">{{ $loc['province'] }}</p>
           @if ($loc['latest'])
-            <div class="grid grid-cols-2 gap-2 text-xs">
-              <div class="panel px-3 py-2">
-                <p class="text-neutral-400">TMA</p>
-                <p data-field="tma_cm" class="stat-mono font-semibold text-neutral-950">{{ $loc['latest']['tma_cm'] }} cm</p>
-              </div>
-              <div class="panel px-3 py-2">
-                <p class="text-neutral-400">Hujan</p>
-                <p data-field="hujan_mm" class="stat-mono font-semibold text-neutral-950">{{ $loc['latest']['hujan_mm'] }} mm</p>
-              </div>
-            </div>
+            <p data-field="recorded_at" class="text-xs text-neutral-400">
+              Diperbarui {{ \Carbon\Carbon::parse($loc['latest']['recorded_at'])->diffForHumans() }}
+            </p>
           @else
             <p class="text-xs text-neutral-400">Belum ada data masuk.</p>
           @endif
@@ -52,10 +45,8 @@
           const id = card.dataset.locationId;
           window.Echo.channel(`location.${id}`).listen('.sensor.updated', (data) => {
             window.applyStatusBadge(card.querySelector('.status-badge'), data.status);
-            const tmaEl = card.querySelector('[data-field="tma_cm"]');
-            const hujanEl = card.querySelector('[data-field="hujan_mm"]');
-            if (tmaEl) tmaEl.textContent = `${data.tma_cm} cm`;
-            if (hujanEl) hujanEl.textContent = `${data.hujan_mm} mm`;
+            const updatedEl = card.querySelector('[data-field="recorded_at"]');
+            if (updatedEl && data.recorded_at) updatedEl.textContent = `Diperbarui ${window.timeAgo(data.recorded_at)}`;
           });
         });
       });

@@ -25,6 +25,9 @@ class UpdateDeviceRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
+     * REVISI FUZZY ON-DEVICE: empat field threshold_tma_/threshold_hujan_
+     * DIHAPUS - lihat catatan yang sama di StoreDeviceRequest.
+     *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
@@ -35,10 +38,6 @@ class UpdateDeviceRequest extends FormRequest
             'device_id' => ['required', 'string', 'max:255', Rule::unique('devices', 'device_id')->ignore($device->id)],
             'name' => ['nullable', 'string', 'max:255'],
             'location_id' => ['required', 'integer', Rule::in($this->allowedLocationIds())],
-            'threshold_tma_siaga' => ['required', 'numeric', 'min:0'],
-            'threshold_tma_bahaya' => ['required', 'numeric', 'gt:threshold_tma_siaga'],
-            'threshold_hujan_siaga' => ['required', 'numeric', 'min:0'],
-            'threshold_hujan_bahaya' => ['required', 'numeric', 'gt:threshold_hujan_siaga'],
             'telegram_chat_id' => ['nullable', 'string', 'max:255'],
             'is_active' => ['sometimes', 'boolean'],
             'sensor_type_ids' => ['nullable', 'array'],

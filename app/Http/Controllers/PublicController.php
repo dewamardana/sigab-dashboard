@@ -29,8 +29,15 @@ class PublicController extends Controller
 
     /**
      * Halaman overview lokasi — kartu ringkas tiap device, berisi SEMUA
-     * sensor (TMA, Hujan, dan sensor pendukung), tanpa grafik — untuk
-     * riwayat & grafik, buka halaman device masing-masing.
+     * sensor publik, tanpa grafik — untuk riwayat & grafik, buka halaman
+     * device masing-masing.
+     *
+     * REVISI FUZZY ON-DEVICE: status sudah final dari device, jadi kartu
+     * ini TIDAK lagi menghitung/menampilkan bar zona TMA & Hujan
+     * berdasarkan threshold (kolomnya sudah dihapus dari tabel devices).
+     * Semua sensor publik (termasuk TMA & hujan) sekarang tampil setara
+     * lewat satu daftar generik `sensors`, diurutkan sensor "penentu
+     * status" (is_core) di depan.
      */
     public function show(Location $location): View
     {
@@ -47,25 +54,25 @@ class PublicController extends Controller
             }
 
             $latestFull = SensorData::where('device_id', $device->id)->latest('recorded_at')->first();
-            $secondary = $device->sensorTypes->where('is_core', false)->where('is_public', true)->map(fn($type) => [
-                'code' => $type->code,
-                'name' => $type->name,
-                'unit' => $type->unit,
-                'value' => $latestFull?->getReading($type->code),
-            ])->values();
+
+            $sensors = $device->sensorTypes
+                ->where('is_public', true)
+                ->sortByDesc('is_core')
+                ->map(fn($type) => [
+                    'code' => $type->code,
+                    'name' => $type->name,
+                    'unit' => $type->unit,
+                    'is_core' => $type->is_core,
+                    'value' => $latestFull?->getReading($type->code),
+                ])
+                ->values();
 
             return [
                 'id' => $device->id,
                 'device_id' => $device->device_id,
                 'name' => $device->name ?: $device->device_id,
                 'latest' => $latest,
-                'secondary' => $secondary,
-                'threshold_tma_siaga' => $device->threshold_tma_siaga,
-                'threshold_tma_bahaya' => $device->threshold_tma_bahaya,
-                'threshold_hujan_siaga' => $device->threshold_hujan_siaga,
-                'threshold_hujan_bahaya' => $device->threshold_hujan_bahaya,
-                'tma_max' => (int) (ceil($device->threshold_tma_bahaya * 1.25 / 10) * 10),
-                'hujan_max' => (int) (ceil($device->threshold_hujan_bahaya * 1.6 / 5) * 5),
+                'sensors' => $sensors,
             ];
         });
 
@@ -73,9 +80,14 @@ class PublicController extends Controller
     }
 
     /**
-     * Halaman detail SATU device — TMA & Hujan dengan gauge masing-masing
-     * (keduanya sama-sama menentukan status, bukan cuma TMA), sensor
-     * pendukung, peta kecil, dan grafik riwayat terpisah per sensor.
+     * Halaman detail SATU device — status besar di atas + grid semua
+     * sensor publik terkini, dan grafik riwayat terpisah per sensor.
+     *
+     * REVISI FUZZY ON-DEVICE: hero gauge TMA & bar Hujan berbasis
+     * threshold DIHAPUS (kolom threshold sudah tidak ada) - status
+     * sekarang ditunjukkan lewat badge besar (data dari field `status`,
+     * final dari device), didukung sensor is_core (freeboard, intensitas
+     * hujan, skor fuzzy) yang tampil menonjol di grid sensor.
      */
     public function device(Location $location, Device $device): View
     {
@@ -86,16 +98,11 @@ class PublicController extends Controller
             ->latest('recorded_at')->limit(200)->get()->reverse()->values();
 
         $latest = $this->latestForDevice($device);
+        $latestFull = $history->last();
         $sensorTypes = $device->sensorTypes()->where('is_public', true)->orderByDesc('is_core')->get();
 
-        // Skala maksimum gauge dihitung dari threshold BAHAYA milik device
-        // sendiri (bukan angka tetap), supaya device dengan threshold
-        // berbeda tetap menampilkan gauge yang proporsional.
-        $tmaGaugeMax = (int) (ceil($device->threshold_tma_bahaya * 1.25 / 10) * 10);
-        $hujanGaugeMax = (int) (ceil($device->threshold_hujan_bahaya * 1.6 / 5) * 5);
-
         return view('public.device', compact(
-            'location', 'device', 'history', 'latest', 'sensorTypes', 'tmaGaugeMax', 'hujanGaugeMax'
+            'location', 'device', 'history', 'latest', 'latestFull', 'sensorTypes'
         ));
     }
 
@@ -105,6 +112,11 @@ class PublicController extends Controller
      * baru restart), jatuh ke query database supaya data tidak "hilang"
      * padahal masih ada di tabel sensor_data. Cache diisi ulang supaya
      * request berikutnya tetap cepat.
+     *
+     * REVISI FUZZY ON-DEVICE: hanya status + recorded_at - tma_cm/
+     * hujan_mm sudah bukan kolom khusus lagi, nilai sensor individual
+     * selalu diambil langsung dari record SensorData terbaru di
+     * pemanggil (lihat show()/device() di atas).
      */
     private function latestForDevice(Device $device): ?array
     {
@@ -120,8 +132,6 @@ class PublicController extends Controller
 
         $latest = [
             'status' => $record->status,
-            'tma_cm' => $record->tma_cm,
-            'hujan_mm' => $record->hujan_mm,
             'recorded_at' => $record->recorded_at->toIso8601String(),
         ];
 
@@ -150,8 +160,6 @@ class PublicController extends Controller
 
         $latest = [
             'status' => $record->status,
-            'tma_cm' => $record->tma_cm,
-            'hujan_mm' => $record->hujan_mm,
             'device_id' => $record->device->device_id,
             'recorded_at' => $record->recorded_at->toIso8601String(),
         ];

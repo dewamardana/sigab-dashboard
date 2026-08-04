@@ -11,11 +11,15 @@ class AdminMonitoringController extends Controller
 {
     /**
      * Dashboard real-time LENGKAP — kartu ringkas tiap device (angka
-     * terkini semua sensor), dikelompokkan per lokasi. Klik kartu untuk
-     * riwayat & grafik lengkapnya (lihat method device() di bawah).
-     * Hanya untuk superadmin (semua lokasi) dan admin_lokasi (cuma lokasi
-     * yang ditugaskan ke dia — sama persis dengan aturan otorisasi
-     * channel privat di routes/channels.php).
+     * terkini SEMUA sensor, termasuk yang privat), dikelompokkan per
+     * lokasi. Klik kartu untuk riwayat & grafik lengkapnya (lihat method
+     * device() di bawah). Hanya untuk superadmin (semua lokasi) dan
+     * admin_lokasi (cuma lokasi yang ditugaskan ke dia).
+     *
+     * REVISI FUZZY ON-DEVICE: threshold_tma_/threshold_hujan_/tma_max/
+     * hujan_max DIHAPUS - kolomnya sudah tidak ada, dan tidak ada lagi
+     * gauge berbasis ambang. `readings` (sudah generik sejak awal, sudah
+     * mencakup SEMUA sensor termasuk TMA/hujan) tidak berubah.
      */
     public function index(): View
     {
@@ -48,12 +52,6 @@ class AdminMonitoringController extends Controller
                     'name' => $device->name ?: $device->device_id,
                     'status' => $latestFull?->status,
                     'recorded_at' => $latestFull?->recorded_at?->toIso8601String(),
-                    'threshold_tma_siaga' => $device->threshold_tma_siaga,
-                    'threshold_tma_bahaya' => $device->threshold_tma_bahaya,
-                    'threshold_hujan_siaga' => $device->threshold_hujan_siaga,
-                    'threshold_hujan_bahaya' => $device->threshold_hujan_bahaya,
-                    'tma_max' => (int) (ceil($device->threshold_tma_bahaya * 1.25 / 10) * 10),
-                    'hujan_max' => (int) (ceil($device->threshold_hujan_bahaya * 1.6 / 5) * 5),
                     'readings' => $readings,
                 ];
             });
@@ -70,11 +68,11 @@ class AdminMonitoringController extends Controller
     }
 
     /**
-     * Detail SATU device — sama persis strukturnya dengan halaman device
-     * publik (gauge TMA, bar Hujan, kartu sensor pendukung, grafik
-     * riwayat terpisah per sensor), TAPI menyertakan SEMUA sensor
-     * termasuk yang privat (baterai), dan real-time-nya lewat channel
-     * privat admin.location.{id}.
+     * Detail SATU device — status besar + grid semua sensor (termasuk
+     * privat), grafik riwayat terpisah per sensor, real-time lewat
+     * channel privat admin.location.{id}.
+     *
+     * REVISI FUZZY ON-DEVICE: gauge TMA/Hujan berbasis threshold DIHAPUS.
      */
     public function device(Location $location, Device $device): View
     {
@@ -92,18 +90,13 @@ class AdminMonitoringController extends Controller
         $latestFull = $history->last();
         $sensorTypes = $device->sensorTypes()->orderByDesc('is_core')->get();
 
-        $tmaGaugeMax = (int) (ceil($device->threshold_tma_bahaya * 1.25 / 10) * 10);
-        $hujanGaugeMax = (int) (ceil($device->threshold_hujan_bahaya * 1.6 / 5) * 5);
-
         $latest = $latestFull ? [
             'status' => $latestFull->status,
-            'tma_cm' => $latestFull->tma_cm,
-            'hujan_mm' => $latestFull->hujan_mm,
             'recorded_at' => $latestFull->recorded_at->toIso8601String(),
         ] : null;
 
         return view('admin.monitoring-device', compact(
-            'location', 'device', 'history', 'latest', 'sensorTypes', 'tmaGaugeMax', 'hujanGaugeMax'
+            'location', 'device', 'history', 'latest', 'latestFull', 'sensorTypes'
         ));
     }
 }

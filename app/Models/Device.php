@@ -17,19 +17,11 @@ class Device extends Model
         'location_id',
         'name',
         'is_active',
-        'threshold_tma_siaga',
-        'threshold_tma_bahaya',
-        'threshold_hujan_siaga',
-        'threshold_hujan_bahaya',
         'telegram_chat_id',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
-        'threshold_tma_siaga' => 'float',
-        'threshold_tma_bahaya' => 'float',
-        'threshold_hujan_siaga' => 'float',
-        'threshold_hujan_bahaya' => 'float',
     ];
 
     public function location(): BelongsTo

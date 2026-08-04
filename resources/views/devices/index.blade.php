@@ -11,8 +11,8 @@
     <div class="flex items-center justify-between">
       <div>
         <h2 class="text-lg font-semibold text-neutral-950">Manajemen Perangkat</h2>
-        <p class="text-sm text-neutral-600">Atur threshold status banjir per perangkat — Node-RED membaca ini
-          otomatis.</p>
+        <p class="text-sm text-neutral-600">Daftarkan perangkat & atur sensor yang dimiliki — status banjir
+          sekarang dihitung langsung di microcontroller (fuzzy), bukan dari ambang di sini.</p>
       </div>
       @if ($locations->count() > 0)
         <button @click="showAddModal = true"
@@ -38,8 +38,6 @@
             <tr>
               <th class="px-4 py-3">Device ID</th>
               <th class="px-4 py-3 hidden sm:table-cell">Lokasi</th>
-              <th class="px-4 py-3 hidden md:table-cell">Threshold TMA</th>
-              <th class="px-4 py-3 hidden md:table-cell">Threshold Hujan</th>
               <th class="px-4 py-3">Status</th>
               <th class="px-4 py-3 text-right">Aksi</th>
             </tr>
@@ -52,12 +50,6 @@
                   <p class="text-xs text-primary-500">{{ $device->name }}</p>
                 </td>
                 <td class="px-4 py-3 hidden sm:table-cell text-primary-700">{{ $device->location->name }}</td>
-                <td class="px-4 py-3 hidden md:table-cell text-primary-700 text-xs">
-                  {{ $device->threshold_tma_siaga }} / {{ $device->threshold_tma_bahaya }} cm
-                </td>
-                <td class="px-4 py-3 hidden md:table-cell text-primary-700 text-xs">
-                  {{ $device->threshold_hujan_siaga }} / {{ $device->threshold_hujan_bahaya }} mm
-                </td>
                 <td class="px-4 py-3">
                   @if ($device->is_active)
                     <span
@@ -75,10 +67,6 @@
                             'device_id',
                             'name',
                             'location_id',
-                            'threshold_tma_siaga',
-                            'threshold_tma_bahaya',
-                            'threshold_hujan_siaga',
-                            'threshold_hujan_bahaya',
                             'telegram_chat_id',
                             'is_active',
                         ]) + ['sensor_type_ids' => $device->sensorTypes->pluck('id')],
@@ -157,32 +145,6 @@
                   <option value="{{ $loc->id }}">{{ $loc->name }}</option>
                 @endforeach
               </select>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block mb-1.5 text-sm font-medium text-neutral-950">TMA Siaga (cm)</label>
-                <input type="number" step="0.1" name="threshold_tma_siaga"
-                  x-model="editingDevice.threshold_tma_siaga" required
-                  class="w-full rounded-lg border-primary-200 text-sm focus:border-primary-500 focus:ring-primary-500/30">
-              </div>
-              <div>
-                <label class="block mb-1.5 text-sm font-medium text-neutral-950">TMA Bahaya (cm)</label>
-                <input type="number" step="0.1" name="threshold_tma_bahaya"
-                  x-model="editingDevice.threshold_tma_bahaya" required
-                  class="w-full rounded-lg border-primary-200 text-sm focus:border-primary-500 focus:ring-primary-500/30">
-              </div>
-              <div>
-                <label class="block mb-1.5 text-sm font-medium text-neutral-950">Hujan Siaga (mm)</label>
-                <input type="number" step="0.1" name="threshold_hujan_siaga"
-                  x-model="editingDevice.threshold_hujan_siaga" required
-                  class="w-full rounded-lg border-primary-200 text-sm focus:border-primary-500 focus:ring-primary-500/30">
-              </div>
-              <div>
-                <label class="block mb-1.5 text-sm font-medium text-neutral-950">Hujan Bahaya (mm)</label>
-                <input type="number" step="0.1" name="threshold_hujan_bahaya"
-                  x-model="editingDevice.threshold_hujan_bahaya" required
-                  class="w-full rounded-lg border-primary-200 text-sm focus:border-primary-500 focus:ring-primary-500/30">
-              </div>
             </div>
             <div>
               <label class="block mb-1.5 text-sm font-medium text-neutral-950">Telegram Chat ID (opsional)</label>

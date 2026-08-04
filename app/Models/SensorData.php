@@ -12,8 +12,6 @@ class SensorData extends Model
 
     protected $fillable = [
         'device_id',
-        'tma_cm',
-        'hujan_mm',
         'readings',
         'status',
         'recorded_at',
@@ -21,8 +19,6 @@ class SensorData extends Model
 
     protected $casts = [
         'readings' => 'array',
-        'tma_cm' => 'float',
-        'hujan_mm' => 'float',
         'recorded_at' => 'datetime',
     ];
 
@@ -30,13 +26,15 @@ class SensorData extends Model
     {
         return $this->belongsTo(Device::class);
     }
-
+    
     public function getReading(string $code): mixed
     {
-        return match ($code) {
-            'tma_cm' => $this->tma_cm,
-            'hujan_mm' => $this->hujan_mm,
-            default => $this->readings[$code] ?? null,
-        };
+        $value = $this->readings[$code] ?? null;
+
+        if (is_bool($value)) {
+            return $value ? 'Aktif' : 'Normal';
+        }
+
+        return $value;
     }
 }
