@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class SensorData extends Model
 {
@@ -14,6 +15,7 @@ class SensorData extends Model
         'device_id',
         'readings',
         'status',
+        'photo_path',
         'recorded_at',
     ];
 
@@ -22,11 +24,13 @@ class SensorData extends Model
         'recorded_at' => 'datetime',
     ];
 
+    protected $appends = ['photo_url'];
+
     public function device(): BelongsTo
     {
         return $this->belongsTo(Device::class);
     }
-    
+
     public function getReading(string $code): mixed
     {
         $value = $this->readings[$code] ?? null;
@@ -36,5 +40,10 @@ class SensorData extends Model
         }
 
         return $value;
+    }
+
+    public function getPhotoUrlAttribute(): ?string
+    {
+        return $this->photo_path ? Storage::url($this->photo_path) : null;
     }
 }

@@ -131,6 +131,9 @@
               <label class="block mb-1.5 text-sm font-medium text-neutral-950">Device ID</label>
               <input type="text" name="device_id" x-model="editingDevice.device_id" required
                 class="w-full rounded-lg border-primary-200 text-sm focus:border-primary-500 focus:ring-primary-500/30">
+                @error('device_id')
+                  <p class="text-xs text-status-bahaya mt-1">{{ $message }}</p>
+                @enderror
             </div>
             <div>
               <label class="block mb-1.5 text-sm font-medium text-neutral-950">Nama Perangkat</label>

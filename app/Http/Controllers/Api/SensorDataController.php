@@ -9,8 +9,9 @@ use App\Models\Device;
 use App\Models\SensorData;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class SensorDataController extends Controller
 {
@@ -44,13 +45,14 @@ class SensorDataController extends Controller
 
         // Pisahkan field di luar CORE_FIELDS -> masuk kolom readings (JSON).
         // Sensor apa pun (sudah dikenal atau belum, termasuk TMA, hujan,
-        // freeboard, skor fuzzy) otomatis tersimpan tanpa perlu ubah kode.
-        // Catatan: is_bool() DITAMBAHKAN ke filter ini - sebelumnya field
-        // boolean (mis. level_kritis) diam-diam TERBUANG karena
-        // is_numeric()/is_string() sama-sama false untuk boolean di PHP.
+        // freeboard, skor fuzzy, capture_id) otomatis tersimpan tanpa
+        // perlu ubah kode. Catatan: is_bool() DITAMBAHKAN ke filter ini -
+        // sebelumnya field boolean (mis. level_kritis) diam-diam TERBUANG
+        // karena is_numeric()/is_string() sama-sama false untuk boolean
+        // di PHP.
         $readings = collect($request->all())
             ->except(self::CORE_FIELDS)
-            ->filter(fn($value) => is_numeric($value) || is_string($value) || is_bool($value))
+            ->filter(fn ($value) => is_numeric($value) || is_string($value) || is_bool($value))
             ->toArray();
 
         $sensorData = SensorData::create([
@@ -90,5 +92,52 @@ class SensorDataController extends Controller
                 'status' => $sensorData->status,
             ],
         ], 201);
+    }
+
+    /**
+     * BARU - terima foto alarm dari Node-RED (yang meneruskannya dari
+     * ESP32-CAM, sudah dicocokkan lewat capture_id) dan lampirkan ke
+     * baris sensor_data yang memicunya.
+     *
+     * Body request diharapkan berupa BINARY MENTAH (bukan JSON, bukan
+     * multipart) - Content-Type "image/jpeg" - jadi dibaca lewat
+     * getContent(), BUKAN $request->file()/all().
+     */
+    public function photo(Request $request, string $id): JsonResponse
+    {
+        $sensorData = SensorData::findOrFail($id);
+
+        $binary = $request->getContent();
+        if (empty($binary)) {
+            return response()->json(['message' => 'Body foto kosong.'], 422);
+        }
+
+        // Batasi ukuran wajar (10 MB) - jaga-jaga kalau ada yg salah kirim,
+        // jangan sampai memenuhi disk.
+        if (strlen($binary) > 10 * 1024 * 1024) {
+            return response()->json(['message' => 'Ukuran foto terlalu besar.'], 413);
+        }
+
+        $device = $sensorData->device;
+        $deviceIdForPath = $device?->device_id ?? 'unknown-device';
+
+        $filename = "captures/{$deviceIdForPath}/{$sensorData->id}.jpg";
+        Storage::disk('public')->put($filename, $binary);
+
+        $sensorData->update(['photo_path' => $filename]);
+
+        // Siarkan ulang - dashboard yang sedang terbuka bisa langsung
+        // menampilkan foto begitu tiba, tanpa refresh (event sudah ada
+        // sejak Tahap 9, cukup dipancarkan ulang dengan data terbaru).
+        event(new SensorDataUpdated($sensorData->fresh()));
+        event(new AdminSensorDataUpdated($sensorData->fresh()));
+
+        return response()->json([
+            'message' => 'Foto tersimpan.',
+            'data' => [
+                'id' => $sensorData->id,
+                'photo_url' => Storage::url($filename),
+            ],
+        ]);
     }
 }
