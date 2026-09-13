@@ -73,6 +73,8 @@ class AdminMonitoringController extends Controller
      * channel privat admin.location.{id}.
      *
      * REVISI FUZZY ON-DEVICE: gauge TMA/Hujan berbasis threshold DIHAPUS.
+     * BARU: foto kejadian (snapshot terakhir + galeri riwayat) - khusus
+     * admin, TIDAK ada di halaman publik.
      */
     public function device(Location $location, Device $device): View
     {
@@ -84,11 +86,36 @@ class AdminMonitoringController extends Controller
             abort(403);
         }
 
+        // BARU: limit dinaikkan dari 200 -> 5000 supaya filter rentang waktu
+        // (1/7/30/90 hari) di grafik benar-benar ada datanya untuk difilter.
+        // Catatan skala: device kirim tiap 5 detik terus-menerus (bukan cuma
+        // saat alarm), jadi 5000 baris ~ 7 jam data non-stop. Untuk rentang
+        // 30/90 hari beneran, ini masih akan kepotong di titik data terlama
+        // yang ke-fetch - itu keterbatasan yang sama seperti komponen
+        // perbandingan di halaman publik (x-comparison-panel), bukan hal
+        // baru. Kalau volume data sudah jauh lebih besar nanti, solusi
+        // jangka panjangnya downsampling/agregasi di query, bukan sekadar
+        // menaikkan limit terus - untuk sekarang ini cukup.
         $history = SensorData::where('device_id', $device->id)
-            ->latest('recorded_at')->limit(200)->get()->reverse()->values();
+            ->latest('recorded_at')->limit(5000)->get()->reverse()->values();
 
         $latestFull = $history->last();
         $sensorTypes = $device->sensorTypes()->orderByDesc('is_core')->get();
+
+        // BARU - foto alarm (lihat SensorDataController::photo()). Cuma
+        // baris yang benar-benar punya photo_path yang diambil, jadi
+        // $latestPhoto bisa berbeda dari $latestFull kalau status
+        // sekarang sudah balik AMAN sejak foto terakhir diambil.
+        $latestPhoto = SensorData::where('device_id', $device->id)
+            ->whereNotNull('photo_path')
+            ->latest('recorded_at')
+            ->first();
+
+        $photoHistory = SensorData::where('device_id', $device->id)
+            ->whereNotNull('photo_path')
+            ->latest('recorded_at')
+            ->limit(24)
+            ->get();
 
         $latest = $latestFull ? [
             'status' => $latestFull->status,
@@ -96,7 +123,7 @@ class AdminMonitoringController extends Controller
         ] : null;
 
         return view('admin.monitoring-device', compact(
-            'location', 'device', 'history', 'latest', 'latestFull', 'sensorTypes'
+            'location', 'device', 'history', 'latest', 'latestFull', 'sensorTypes', 'latestPhoto', 'photoHistory'
         ));
     }
 }

@@ -57,6 +57,12 @@ class AdminSensorDataUpdated implements ShouldBroadcast
             'status' => $this->sensorData->status,
             'recorded_at' => $this->sensorData->recorded_at,
             'readings' => $readings,
+            // BARU - null di sebagian besar broadcast (siklus kirim biasa
+            // tanpa foto), terisi cuma saat SensorDataController::photo()
+            // memancarkan ulang event ini setelah foto tersimpan. Sengaja
+            // TIDAK ditambahkan ke SensorDataUpdated (channel publik) -
+            // foto ini khusus admin.
+            'photo_url' => $this->sensorData->photo_url,
         ];
     }
 }
