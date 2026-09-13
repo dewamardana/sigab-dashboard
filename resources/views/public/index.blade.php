@@ -224,16 +224,9 @@
           </div>
 
           @if ($loc['latest'])
-            <div class="grid grid-cols-2 gap-2 mb-4 text-xs">
-              <div class="panel px-3 py-2">
-                <p class="text-neutral-400">TMA</p>
-                <p class="stat-mono font-semibold text-neutral-950">{{ $loc['latest']['tma_cm'] }} <span class="font-sans font-normal text-neutral-400">cm</span></p>
-              </div>
-              <div class="panel px-3 py-2">
-                <p class="text-neutral-400">Hujan</p>
-                <p class="stat-mono font-semibold text-neutral-950">{{ $loc['latest']['hujan_mm'] }} <span class="font-sans font-normal text-neutral-400">mm</span></p>
-              </div>
-            </div>
+            <p class="text-xs text-neutral-500 mb-4">
+              Diperbarui {{ \Carbon\Carbon::parse($loc['latest']['recorded_at'])->diffForHumans() }}
+            </p>
           @endif
 
           <div class="flex items-center justify-between pt-4 border-t border-neutral-100">

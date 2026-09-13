@@ -15,7 +15,7 @@ return new class extends Migration
             $table->foreignId('device_id')->nullable()->after('id')
                 ->constrained('devices')->nullOnDelete();
 
-            $table->json('readings')->nullable()->after('hujan_mm');
+            $table->json('readings')->nullable()->before('status');
         });
     }
 

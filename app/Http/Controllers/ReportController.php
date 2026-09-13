@@ -39,16 +39,19 @@ class ReportController extends Controller
 
         return response()->streamDownload(function () use ($records) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Waktu', 'Lokasi', 'Perangkat', 'TMA (cm)', 'Curah Hujan (mm)', 'Status']);
-
+          
+            fputcsv($out, ['Waktu', 'Lokasi', 'Perangkat', 'Status', 'Skor Fuzzy', 'Freeboard (m)', 'TMA (cm)', 'Curah Hujan (mm/jam)', 'Level Kritis']);
             foreach ($records as $r) {
                 fputcsv($out, [
                     $r->recorded_at?->format('Y-m-d H:i:s'),
                     $r->device->location->name ?? '-',
                     $r->device->name ?: $r->device->device_id ?? '-',
-                    $r->tma_cm,
-                    $r->hujan_mm,
                     $r->status,
+                    $r->getReading('status_skor'),
+                    $r->getReading('freeboard_m'),
+                    $r->getReading('tma_cm'),
+                    $r->getReading('hujan_intensitas'),
+                    $r->getReading('level_kritis'),
                 ]);
             }
 

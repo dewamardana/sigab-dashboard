@@ -66,8 +66,8 @@
               </td>
               <td class="px-4 py-3">{{ $r->device->location->name ?? '-' }}</td>
               <td class="px-4 py-3">{{ $r->device->name ?: $r->device->device_id ?? '-' }}</td>
-              <td class="px-4 py-3 text-right stat-mono">{{ $r->tma_cm ?? '-' }} <span class="text-neutral-400">cm</span></td>
-              <td class="px-4 py-3 text-right stat-mono">{{ $r->hujan_mm ?? '-' }} <span class="text-neutral-400">mm</span></td>
+              <td class="px-4 py-3 text-right stat-mono">{{ $r->getReading('tma_cm') ?? '-' }} <span class="text-neutral-400">cm</span></td>
+              <td class="px-4 py-3 text-right stat-mono">{{ $r->getReading('hujan_mm') ?? '-' }} <span class="text-neutral-400">mm</span></td>
               <td class="px-4 py-3"><x-status-badge :status="$r->status" size="sm" /></td>
             </tr>
           @empty

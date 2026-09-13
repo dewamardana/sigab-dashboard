@@ -37,37 +37,33 @@
                 <x-status-badge :status="$d['status']" size="sm" class="shrink-0" />
               </div>
 
-              <div class="space-y-[8px] mb-3">
-                @foreach ($d['readings']->where('is_core', true) as $r)
-                  <div>
-                    <div class="flex items-center justify-between text-[11px] text-neutral-500 mb-1">
+              {{-- Sensor "penentu status" (is_core) ditonjolkan dulu, baris sendiri --}}
+              @php $coreReadings = $d['readings']->where('is_core', true); @endphp
+              @if ($coreReadings->isNotEmpty())
+                <div class="space-y-[8px] mb-3">
+                  @foreach ($coreReadings as $r)
+                    <div class="flex items-center justify-between text-[11px] text-neutral-500">
                       <span>{{ $r['name'] }}</span>
-                      <span data-field="{{ $r['code'] }}" data-unit="{{ $r['unit'] }}" class="stat-mono font-semibold text-neutral-950">
+                      <span data-field="{{ $r['code'] }}" data-unit="{{ $r['unit'] }}" class="stat-mono font-semibold text-primary-700">
                         {{ $r['value'] ?? '-' }} {{ $r['unit'] }}
                       </span>
-                    </div>
-                    <div data-bar-gauge="{{ $r['code'] }}" data-value="{{ $r['value'] ?? 0 }}"
-                      data-siaga="{{ $r['code'] === 'tma_cm' ? $d['threshold_tma_siaga'] : $d['threshold_hujan_siaga'] }}"
-                      data-bahaya="{{ $r['code'] === 'tma_cm' ? $d['threshold_tma_bahaya'] : $d['threshold_hujan_bahaya'] }}"
-                      data-max="{{ $r['code'] === 'tma_cm' ? $d['tma_max'] : $d['hujan_max'] }}"></div>
-                  </div>
-                @endforeach
-              </div>
-
-              @php $secondary = $d['readings']->where('is_core', false); @endphp
-              @if ($secondary->isNotEmpty())
-                <div class="grid grid-cols-2 gap-2 pt-3 border-t border-neutral-100">
-                  @foreach ($secondary as $r)
-                    <div>
-                      <p>
-                        <span data-field="{{ $r['code'] }}" data-unit="{{ $r['unit'] }}" class="stat-mono text-[13px] font-semibold text-neutral-950">{{ $r['value'] ?? '-' }}</span>
-                        <span class="text-[10px] text-neutral-400">{{ $r['unit'] }}</span>
-                      </p>
-                      <p class="text-[10px] text-neutral-500">{{ $r['name'] }}</p>
                     </div>
                   @endforeach
                 </div>
               @endif
+
+              {{-- Semua sensor lainnya - grid ringkas --}}
+              <div class="grid grid-cols-2 gap-2 mb-3 pt-3 border-t border-neutral-100">
+                @foreach ($d['readings']->where('is_core', false) as $r)
+                  <div>
+                    <p>
+                      <span data-field="{{ $r['code'] }}" data-unit="{{ $r['unit'] }}" class="stat-mono text-[13px] font-semibold text-neutral-950">{{ $r['value'] ?? '-' }}</span>
+                      <span class="text-[10px] text-neutral-400">{{ $r['unit'] }}</span>
+                    </p>
+                    <p class="text-[10px] text-neutral-500">{{ $r['name'] }}</p>
+                  </div>
+                @endforeach
+              </div>
 
               <p class="text-[11px] text-primary-600 font-medium mt-3 pt-3 border-t border-neutral-100 inline-flex items-center gap-1">
                 Lihat riwayat &amp; grafik

@@ -306,9 +306,13 @@ window.renderSensorCharts = function (root, { sensorTypes, history, height = 180
     sensorTypes.forEach((type) => {
         const points = history
             .map((h) => {
-                const value = type.code === 'tma_cm' ? h.tma_cm
-                    : type.code === 'hujan_mm' ? h.hujan_mm
-                        : (h.readings ? h.readings[type.code] : null);
+                // REVISI FUZZY ON-DEVICE: tma_cm/hujan_mm sudah bukan kolom
+                // khusus lagi di sensor_data - semua sensor (termasuk
+                // keduanya) sekarang lewat h.readings, sama seperti sensor
+                // lain. Case khusus lama dihapus karena h.tma_cm/h.hujan_mm
+                // tidak pernah ada di payload JSON SensorData lagi (selalu
+                // undefined), yang bikin grafik TMA & Hujan kosong.
+                const value = h.readings ? h.readings[type.code] : null;
                 return value === null || value === undefined ? null : [new Date(h.recorded_at).getTime(), value];
             })
             .filter((p) => p !== null);

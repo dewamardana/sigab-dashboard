@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class SensorData extends Model
 {
@@ -12,19 +13,18 @@ class SensorData extends Model
 
     protected $fillable = [
         'device_id',
-        'tma_cm',
-        'hujan_mm',
         'readings',
         'status',
+        'photo_path',
         'recorded_at',
     ];
 
     protected $casts = [
         'readings' => 'array',
-        'tma_cm' => 'float',
-        'hujan_mm' => 'float',
         'recorded_at' => 'datetime',
     ];
+
+    protected $appends = ['photo_url'];
 
     public function device(): BelongsTo
     {
@@ -33,10 +33,17 @@ class SensorData extends Model
 
     public function getReading(string $code): mixed
     {
-        return match ($code) {
-            'tma_cm' => $this->tma_cm,
-            'hujan_mm' => $this->hujan_mm,
-            default => $this->readings[$code] ?? null,
-        };
+        $value = $this->readings[$code] ?? null;
+
+        if (is_bool($value)) {
+            return $value ? 'Aktif' : 'Normal';
+        }
+
+        return $value;
+    }
+
+    public function getPhotoUrlAttribute(): ?string
+    {
+        return $this->photo_path ? Storage::url($this->photo_path) : null;
     }
 }

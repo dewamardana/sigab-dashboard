@@ -13,9 +13,8 @@ return new class extends Migration
     {
         Schema::create('sensor_data', function (Blueprint $table) {
             $table->id();
-            $table->float('tma_cm')->nullable();
-            $table->float('hujan_mm')->nullable();
             $table->string('status')->nullable();
+            $table->string('photo_path')->nullable();
             $table->timestamp('recorded_at')->nullable();
             $table->timestamps();
         });

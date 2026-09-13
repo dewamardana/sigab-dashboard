@@ -15,7 +15,11 @@ class DeviceSeeder extends Seeder
      * 2 device per lokasi, TANPA data sensor apa pun — cuma struktur
      * device-nya saja, siap langsung menerima data uji lewat
      * mosquitto_pub / Node-RED / endpoint /api/sensor-data.
-     */
+     *
+     * REVISI FUZZY ON-DEVICE: field threshold_tma_/threshold_hujan_
+     * dihapus - device tidak lagi butuh angka ambang di database, karena
+     * status sudah final dihitung microcontroller.
+     **/
     public function run(): void
     {
         $sensorTypeIds = SensorType::pluck('id');
@@ -46,10 +50,6 @@ class DeviceSeeder extends Seeder
                         'location_id' => $location->id,
                         'name' => $deviceData['name'],
                         'is_active' => true,
-                        'threshold_tma_siaga' => 100,
-                        'threshold_tma_bahaya' => 200,
-                        'threshold_hujan_siaga' => 5,
-                        'threshold_hujan_bahaya' => 15,
                     ]
                 );
 

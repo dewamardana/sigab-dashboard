@@ -7,6 +7,13 @@
         'kelembapan' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3c3 4 6 7.5 6 11a6 6 0 1 1-12 0c0-3.5 3-7 6-11Z"/>',
         'angin_kmph' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3 8h11a3 3 0 1 0-3-3"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 12h15a3 3 0 1 1-3 3"/>',
         'baterai_v' => '<rect x="2" y="7" width="18" height="10" rx="2.5"/><rect x="21" y="10" width="2" height="4" rx="1" fill="currentColor" stroke="none"/>',
+        'tma_cm' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3 9c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 15c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0"/>',
+        'hujan_mm' => '<path stroke-linecap="round" stroke-linejoin="round" d="M6 14a4 4 0 0 1 .5-7.97A5.5 5.5 0 0 1 17 8a3.5 3.5 0 0 1-1 6.9H6Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l-1 2M13 18l-1 2M17 18l-1 2"/>',
+        'hujan_intensitas' => '<path stroke-linecap="round" stroke-linejoin="round" d="M6 14a4 4 0 0 1 .5-7.97A5.5 5.5 0 0 1 17 8a3.5 3.5 0 0 1-1 6.9H6Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l-1 2M13 18l-1 2M17 18l-1 2"/>',
+        'hujan_kategori' => '<path stroke-linecap="round" stroke-linejoin="round" d="M6 16a4 4 0 0 1 .5-7.97A5.5 5.5 0 0 1 17 9a3.5 3.5 0 0 1-1 6.9H6Z"/>',
+        'freeboard_m' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M9 6l3-3 3 3M9 18l3 3 3-3"/>',
+        'status_skor' => '<path stroke-linecap="round" stroke-linejoin="round" d="M4 15a8 8 0 1 1 16 0"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 15l3.5-4.5"/><circle cx="12" cy="15" r="1" fill="currentColor" stroke="none"/>',
+        'level_kritis' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 4 3 19h18L12 4Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v4"/><circle cx="12" cy="17" r="0.7" fill="currentColor" stroke="none"/>',
     ];
     $fallbackIcon = '<circle cx="12" cy="12" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 2"/>';
   @endphp
@@ -55,31 +62,9 @@
               <p class="font-semibold text-neutral-950 text-[14px]">{{ $d['name'] }}</p>
               <x-status-badge :status="$d['latest']['status'] ?? null" size="sm" />
             </div>
-
-            {{-- TMA & Hujan — dua bar zona, penentu status --}}
-            <div class="space-y-[8px] mb-[13px]">
-              <div>
-                <div class="flex items-center justify-between text-[11px] text-neutral-500 mb-1">
-                  <span>Tinggi muka air</span>
-                  <span data-field="tma_cm" class="stat-mono font-semibold text-neutral-950">{{ $d['latest']['tma_cm'] ?? '-' }} cm</span>
-                </div>
-                <div data-bar-gauge="tma_cm" data-value="{{ $d['latest']['tma_cm'] ?? 0 }}" data-siaga="{{ $d['threshold_tma_siaga'] }}"
-                  data-bahaya="{{ $d['threshold_tma_bahaya'] }}" data-max="{{ $d['tma_max'] }}"></div>
-              </div>
-              <div>
-                <div class="flex items-center justify-between text-[11px] text-neutral-500 mb-1">
-                  <span>Curah hujan</span>
-                  <span data-field="hujan_mm" class="stat-mono font-semibold text-neutral-950">{{ $d['latest']['hujan_mm'] ?? '-' }} mm</span>
-                </div>
-                <div data-bar-gauge="hujan_mm" data-value="{{ $d['latest']['hujan_mm'] ?? 0 }}" data-siaga="{{ $d['threshold_hujan_siaga'] }}"
-                  data-bahaya="{{ $d['threshold_hujan_bahaya'] }}" data-max="{{ $d['hujan_max'] }}"></div>
-              </div>
-            </div>
-
-            {{-- Sensor pendukung — ringkas, ikon + angka --}}
-            @if ($d['secondary']->isNotEmpty())
+            @if ($d['sensors']->isNotEmpty())
               <div class="grid grid-cols-2 gap-[8px] pt-[13px] border-t border-neutral-100">
-                @foreach ($d['secondary'] as $s)
+                @foreach ($d['sensors'] as $s)
                   <div class="flex items-center gap-[6px]">
                     <div class="w-6 h-6 rounded-md bg-primary-50 flex items-center justify-center shrink-0">
                       <svg class="w-3 h-3 text-primary-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -87,7 +72,7 @@
                       </svg>
                     </div>
                     <span data-field="{{ $s['code'] }}" data-unit="{{ $s['unit'] }}" class="stat-mono text-[12px] font-semibold text-neutral-950 truncate">
-                      {{ $s['value'] ?? '-' }}<span class="text-[10px] font-sans font-normal text-neutral-400"> {{ $s['unit'] }}</span>
+                      {{ $s['value'] ?? '-' }}
                     </span>
                   </div>
                 @endforeach
@@ -127,26 +112,6 @@
           if (!card) return;
 
           window.applyStatusBadge(card.querySelector('.status-badge'), data.status);
-
-          const tmaField = card.querySelector('[data-field="tma_cm"]');
-          const hujanField = card.querySelector('[data-field="hujan_mm"]');
-          if (tmaField) tmaField.textContent = `${data.tma_cm} cm`;
-          if (hujanField) hujanField.textContent = `${data.hujan_mm} mm`;
-
-          const tmaBar = card.querySelector('[data-bar-gauge="tma_cm"]');
-          const hujanBar = card.querySelector('[data-bar-gauge="hujan_mm"]');
-          if (tmaBar) {
-            window.createBarGauge(tmaBar, {
-              value: data.tma_cm, siaga: Number(tmaBar.dataset.siaga),
-              bahaya: Number(tmaBar.dataset.bahaya), max: Number(tmaBar.dataset.max), size: 'sm',
-            });
-          }
-          if (hujanBar) {
-            window.createBarGauge(hujanBar, {
-              value: data.hujan_mm, siaga: Number(hujanBar.dataset.siaga),
-              bahaya: Number(hujanBar.dataset.bahaya), max: Number(hujanBar.dataset.max), size: 'sm',
-            });
-          }
 
           // Sensor pendukung — semua ikut update, bukan cuma TMA & Hujan.
           const readings = data.readings || {};
