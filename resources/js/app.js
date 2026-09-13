@@ -298,10 +298,24 @@ window.renderComparisonPanel = function (root, { charts, devices, defaultDeviceI
 // Grafik per-sensor — satu chart mandiri per jenis sensor milik SATU device,
 // semuanya tampil sekaligus dalam kartu terpisah (bukan lewat tab). Dipakai
 // di halaman device untuk riwayat sensor device itu sendiri.
+//
+// BARU: satu filter rentang waktu bersama (data-sensor-range-*) yang
+// berlaku ke SEMUA chart sekaligus - polanya sengaja dibuat identik dengan
+// renderComparisonPanel (dipakai di halaman publik) supaya perilakunya
+// konsisten di seluruh aplikasi, cuma nama data-attribute-nya beda
+// (data-sensor-range-* bukan data-range-*) supaya tidak bentrok kalau
+// suatu saat kedua komponen ini tampil di halaman yang sama.
 // ============================================================================
 window.renderSensorCharts = function (root, { sensorTypes, history, height = 180 }) {
     const charts = {};
     const rawPoints = {};
+    let rangeDays = 7;
+
+    function filterPoints(points, days) {
+        if (days === 0) return points;
+        const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+        return points.filter((p) => p[0] >= cutoff);
+    }
 
     sensorTypes.forEach((type) => {
         const points = history
@@ -324,7 +338,7 @@ window.renderSensorCharts = function (root, { sensorTypes, history, height = 180
         const chart = new ApexCharts(el, {
             ...window.softChartDefaults,
             chart: { ...window.softChartDefaults.chart, height, type: 'area' },
-            series: [{ name: type.name, data: points }],
+            series: [{ name: type.name, data: filterPoints(points, rangeDays) }],
             colors: [type.is_core ? '#248232' : '#2ba84a'],
             fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.2, opacityTo: 0, stops: [0, 90, 100] } },
             tooltip: {
@@ -352,10 +366,40 @@ window.renderSensorCharts = function (root, { sensorTypes, history, height = 180
         charts[type.code] = chart;
     });
 
+    function applyRange(days) {
+        rangeDays = days;
+        Object.keys(charts).forEach((code) => {
+            charts[code].updateSeries([{ data: filterPoints(rawPoints[code] || [], rangeDays) }]);
+        });
+    }
+
+    const rangeToggle = root.querySelector('[data-sensor-range-toggle]');
+    const rangeMenu = root.querySelector('[data-sensor-range-menu]');
+    const rangeLabel = root.querySelector('[data-sensor-range-label]');
+    if (rangeToggle && rangeMenu) {
+        rangeToggle.addEventListener('click', () => rangeMenu.classList.toggle('hidden'));
+        document.addEventListener('click', (e) => {
+            if (!rangeMenu.classList.contains('hidden') && !rangeToggle.contains(e.target) && !rangeMenu.contains(e.target)) {
+                rangeMenu.classList.add('hidden');
+            }
+        });
+        root.querySelectorAll('[data-sensor-range-option]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const days = Number(btn.dataset.sensorRangeOption);
+                if (rangeLabel) rangeLabel.textContent = btn.textContent.trim();
+                rangeMenu.classList.add('hidden');
+                applyRange(days);
+            });
+        });
+    }
+
     return {
         pushPoint(code, x, y) {
             if (y === null || y === undefined || !rawPoints[code]) return;
             rawPoints[code].push([x, y]);
+            // Titik real-time selalu "baru" (timestamp sekarang), jadi selalu
+            // masuk rentang filter berapa pun yang aktif - aman langsung
+            // ditempel ke chart tanpa perlu re-filter semuanya.
             if (charts[code]) charts[code].appendData([{ data: [[x, y]] }]);
         },
     };
